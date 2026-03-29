@@ -1,0 +1,56 @@
+[workspace]
+# 1. 明确定义工作区成员（车间）
+# 将代码逻辑解耦到独立的 crate 中，方便多人并行开发和独立测试
+members = [
+    "crates/aios-spec",    # 协议定义 (Protobuf/IDL)
+    "crates/aios-core",    # 核心状态机与动作总线
+    "crates/aios-kernel",  # Android 内核拦截适配 (eBPF/LSM)
+    "crates/aios-agent",   # AI 逻辑、推理与记忆
+    "crates/aios-adapter", # 离线/在线切换适配层
+    "crates/aios-cli",     # 团队内部工具 (Replayer, Evaluator)
+]
+
+# 2. 现代 Rust 必需：使用新版特性解析器
+resolver = "2"
+
+# 3. 共享元数据：定义一次，全员复用
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["DiPECS Team <dev@dipecs.os>"]
+license = "Apache-2.0"
+repository = "https://github.com/your-org/DiPECS"
+
+# 4. 依赖管理中心：统一全队使用的库版本
+# 这样可以避免 A 员用 tokio 1.0，B 员用 tokio 1.30 导致的编译冲突
+[workspace.dependencies]
+# --- 异步与并发 ---
+tokio = { version = "1.36", features = ["full"] }
+async-trait = "0.1"
+
+# --- 序列化与协议 (离线数据处理的核心) ---
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+prost = "0.12"  # 高性能 Protobuf 实现
+
+# --- 错误处理与日志 (系统可观测性) ---
+anyhow = "1.0"      # 方便的顶级错误处理
+thiserror = "1.0"   # 定义结构化系统错误
+tracing = "0.1"     # 语义化追踪
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# --- 移动端与底层 ---
+jni = "0.21"        # Android JNI 交互
+libc = "0.2"        # 系统底层调用
+
+# --- 内部模块互相引用 ---
+aios-spec = { path = "crates/aios-spec" }
+aios-core = { path = "crates/aios-core" }
+aios-adapter = { path = "crates/aios-adapter" }
+
+# 5. 编译优化配置 (Profile)
+[profile.release]
+opt-level = 3       # 生产环境极致优化
+lto = true          # 链接时优化，减小 Android 上的 .so 体积
+codegen-units = 1   # 进一步优化性能
+panic = "abort"     # Android 上通常选择 abort 减小体积并简化状态机

@@ -1,0 +1,62 @@
+# --- [ 1. Rust/Cargo 必备 ] ---
+# 过滤所有编译产物（这是最大的垃圾来源）
+target/
+# 过滤 Cargo 产生的备份文件
+**/*.rs.bk
+# 如果你使用了特定的集成测试输出
+tests/*.log
+# Rust/Cargo 补充
+node_modules/
+.venv/
+dist/
+
+# --- [ 2. IDE 与开发环境 ] ---
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (CLion/IntelliJ)
+.idea/
+*.iml
+
+# Vim/Emacs
+*~
+*.swp
+.DS_Store
+
+# --- [ 3. Android & NDK 交叉编译 ] ---
+# 过滤 Android Studio 产生的本地配置文件
+.cxx/
+local.properties
+.externalNativeBuild/
+# 所有的 .so 动态库（除非是预编译的第三方库）
+*.so
+
+# --- [ 4. 离线数据与日志 (核心项) ] ---
+# 过滤巨大的原始采集数据（建议存放在专门的数据服务器或通过 LFS 管理）
+data/traces/*.raw
+data/traces/*.bin
+# 过滤运行时的临时评估日志
+data/evaluation/*.log
+logs/
+*.out
+
+# --- [ 5. 密钥与隐私 ] ---
+# 严禁将任何密钥、Token 提交到 Git
+.env
+*.pem
+*.key
+*.p12
+
+# --- [ 6. 系统与杂项 ] ---
+Thumbs.db
+desktop.ini
+.DS_Store
+temp/
+*.tmp
+*.temp
+*.bak
