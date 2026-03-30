@@ -31,3 +31,5 @@ aios-root/
     ├── integration/       # 跨模块集成测试
     └── scenarios/         # 场景化测试 (例如：模拟一次完整的“订票”意图)
 ```
+
+lsy到此一游
