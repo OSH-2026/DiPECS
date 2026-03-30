@@ -17,9 +17,9 @@ resolver = "2"
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["DiPECS Team <dev@dipecs.os>"]
+authors = ["DiPECS Team <augustlin114514@qq.com>"]
 license = "Apache-2.0"
-repository = "https://github.com/your-org/DiPECS"
+repository = "https://github.com/114August514/DiPECS"
 
 # 4. 依赖管理中心：统一全队使用的库版本
 # 这样可以避免 A 员用 tokio 1.0，B 员用 tokio 1.30 导致的编译冲突
@@ -44,6 +44,7 @@ jni = "0.21"        # Android JNI 交互
 libc = "0.2"        # 系统底层调用
 
 # --- 内部模块互相引用 ---
+# 以后子模块想引用 spec 模块，只需写 aios-spec = { workspace = true } 即可
 aios-spec = { path = "crates/aios-spec" }
 aios-core = { path = "crates/aios-core" }
 aios-adapter = { path = "crates/aios-adapter" }

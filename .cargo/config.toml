@@ -1,0 +1,42 @@
+# --- [ 1. 快捷别名 (Aliases) ] ---
+# 提高团队的协作效率，统一常用命令
+[alias]
+# 常用简写
+b = "build"
+r = "run"
+t = "test"
+c = "check"
+# 一键编译安卓版本（生产环境）
+android-release = "build --target aarch64-linux-android --release"
+# 运行本地测试并开启日志
+test-log = "test -- --nocapture"
+
+# --- [ 2. 编译配置 (Build Settings) ] ---
+[build]
+# 默认情况下不锁定 target，方便在 Ubuntu 本地开发
+# 但你可以取消注释下面这行，强制默认编译安卓版本
+# target = "aarch64-linux-android"
+
+# --- [ 3. 安卓交叉编译核心配置 (Target Linkers) ] ---
+# 这是最核心的部分：告诉 Rust 在为安卓编译时，去哪里找“链接器”
+# 注意：这里的链接器名称需要与 NDK 提供的工具链匹配
+
+[target.aarch64-linux-android]
+# 使用环境变量来指定链接器路径，这样 NDK 安装位置不同也没关系
+# 我们会在 scripts/setup-env.sh 中定义这个环境变量
+linker = "aarch64-linux-android33-clang" 
+
+[target.x86_64-linux-android]
+linker = "x86_64-linux-android33-clang"
+
+# --- [ 4. 运行器配置 (Runners) ] ---
+# 当你在 Ubuntu 上输入 `cargo test` 时，使用默认运行器
+# 以后如果你有了安卓真机调试环境，可以配置 `cargo run` 自动推送到手机
+[target.aarch64-linux-android]
+runner = "scripts/android-runner.sh"
+
+# --- [ 5. 编译性能优化 ] ---
+# 仅在开发机（Linux）上开启 LLD，避免干扰 Android 交叉编译
+[target.x86_64-unknown-linux-gnu]
+# 开启增量编译，缩短日常开发的等待时间
+rustflags = ["-C", "link-arg=-fuse-ld=lld"] # 使用更快的 LLD 链接器（需系统安装 lld）

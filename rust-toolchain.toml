@@ -1,0 +1,24 @@
+[toolchain]
+# 1. 锁定具体版本
+channel = "1.83.0"
+
+# 2. 必需的组件
+components = [
+    "rustfmt",                      # 自动格式化
+    "clippy",                       # 静态代码检查
+    "rust-src",                     # 标准库源码
+    "rust-analyzer",                # 确保 IDE 插件版本一致
+    "llvm-tools-preview"            # 性能分析和底层工具
+]
+
+# 3. 预设编译目标（Target）
+targets = [
+    "x86_64-unknown-linux-gnu",     # 开发机（Ubuntu）本地编译
+    "aarch64-linux-android",        # 目标机（现代安卓手机）
+    "x86_64-linux-android",         # 安卓模拟器（开发调试必备）
+    # "wasm32-unknown-unknown"      # (可选) 如果以后想做 Web 端可视化
+]
+
+# 4. 这里的 profile 选择 minimal 或 default
+# 选 minimal 可以加快新人在新环境下的初始化速度
+profile = "minimal"
