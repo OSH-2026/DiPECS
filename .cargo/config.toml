@@ -25,15 +25,10 @@ test-log = "test -- --nocapture"
 # 使用环境变量来指定链接器路径，这样 NDK 安装位置不同也没关系
 # 我们会在 scripts/setup-env.sh 中定义这个环境变量
 linker = "aarch64-linux-android33-clang" 
+runner = "scripts/android-runner.sh"
 
 [target.x86_64-linux-android]
 linker = "x86_64-linux-android33-clang"
-
-# --- [ 4. 运行器配置 (Runners) ] ---
-# 当你在 Ubuntu 上输入 `cargo test` 时，使用默认运行器
-# 以后如果你有了安卓真机调试环境，可以配置 `cargo run` 自动推送到手机
-[target.aarch64-linux-android]
-runner = "scripts/android-runner.sh"
 
 # --- [ 5. 编译性能优化 ] ---
 # 仅在开发机（Linux）上开启 LLD，避免干扰 Android 交叉编译
