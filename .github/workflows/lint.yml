@@ -71,6 +71,10 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }} 
           components: clippy
 
+      # 安装依赖
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y lld
+
       # --- 开启缓存 ---
       # Rust 编译很慢。这个机器人会记住上次编译好的中间文件。
       # 下次跑 CI 时，如果依赖没变，直接复用，速度提升 5-10 倍。
