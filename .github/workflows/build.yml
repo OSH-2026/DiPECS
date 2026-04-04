@@ -87,7 +87,15 @@ jobs:
           key: v1-build-${{ matrix.platform.target }}
 
       - name: Compile Release
-        run: cargo build --workspace --target ${{ matrix.platform.target }} --release --locked
+        run: |
+          if [ "${{ matrix.platform.use_ndk }}" == "true" ]; then
+            cargo build --workspace --target ${{ matrix.platform.target }} --release --locked
+          else
+            # 在 CI 的 Linux 纯净环境下，强制覆盖 .cargo/config.toml 中的 lld 配置
+            # 避免因为未安装 lld 导致链接失败，同时保持本地开发依然可以使用 lld
+            CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS="" \
+            cargo build --workspace --target ${{ matrix.platform.target }} --release --locked
+          fi
 
       # 增加二进制剥离 (Strip) 以减小体积，并输出大小对比
       - name: Inspect & Strip Binary
