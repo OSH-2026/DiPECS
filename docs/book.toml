@@ -1,7 +1,6 @@
 [book]
 authors = ["114August514"]
 language = "zh-CN"
-multilingual = false
 src = "src"
 title = "DiPECS 核心架构指南"
 
