@@ -49,7 +49,7 @@ jobs:
         if: matrix.platform.use_ndk == false
         run: |
           sudo apt-get update
-          sudo apt-get install -y lld
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y lld
 
       # 仅在 Android 构建时处理 NDK
       - name: Cache Android NDK
@@ -120,6 +120,9 @@ jobs:
         run: |
           BINARY="target/${{ matrix.platform.target }}/release/aios-cli"
           if [ -f "$BINARY" ]; then
+            echo "--- ELF Header (Machine Check) ---"
+            $TOOLCHAIN_BIN/llvm-readelf -h "$BINARY" | grep "Machine:"
+            echo "--- Shared Library Dependencies ---"
             $TOOLCHAIN_BIN/llvm-readelf -d "$BINARY" | grep "NEEDED"
           fi
 
