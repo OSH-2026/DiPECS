@@ -26,11 +26,18 @@ jobs:
         with:
           toolchain: 1.86.0
 
-      - name: Install mdBook & Plugins
+      - name: Install Documentation Tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: mdbook,mdbook-graphviz,cargo-deps
+
+      - name: Install System Dependencies (Graphviz)
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Verify Tools
         run: |
-          cargo install mdbook || true
-          cargo install mdbook-graphviz || true
-          cargo install cargo-deps || true
+          mdbook --version
+          dot -V
 
       - name: Generate Dependency Graph
         run: |
@@ -39,9 +46,7 @@ jobs:
 
       - name: Build mdBook
         run: |
-          cd docs
-          mdbook build
-          cd ..
+          mdbook build docs
 
       - name: Build API Docs
         run: cargo doc --no-deps --workspace
