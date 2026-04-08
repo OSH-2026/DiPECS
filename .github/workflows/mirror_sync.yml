@@ -1,0 +1,34 @@
+name: Mirror to OSH2026
+
+on:
+  push:               # 监听所有推送
+  delete:             # 监听分支删除
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  mirror_to_org:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整的历史记录
+
+      - name: Mirror Push
+        env:
+          DEST_REPO: "github.com/OSH-2026/DiPECS.git"
+          PAT: ${{ secrets.OSH2026_SYNC_TOKEN }}
+        run: |
+          # 1. 设置远程仓库地址
+          REMOTE_URL="https://x-access-token:${PAT}@${DEST_REPO}"
+          
+          # 2. 确保抓取所有远程信息
+          git fetch --prune --unshallow 2>/dev/null || git fetch --prune
+
+          # 3. 镜像推送
+          # - 解释：
+          #   "refs/heads/*:refs/heads/*" -> 同步所有分支
+          #   "refs/tags/*:refs/tags/*"   -> 同步所有标签
+          #   --force -> 强制覆盖
+          #   --prune -> 跟随删除
+          git push "$REMOTE_URL" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*" --force --prune

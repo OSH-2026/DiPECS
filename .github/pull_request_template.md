@@ -1,4 +1,4 @@
-# 🛠️ 拉取请求 (Pull Request)
+# 拉取请求 (Pull Request)
 
 ## 📝 变更类型 (Type of Change)
 <!-- 请勾选适用的选项 / Please check the options that are relevant -->
@@ -15,8 +15,8 @@
 <!-- Describe the changes and the reasoning behind them -->
 
 ## 🔗 相关议题 (Related Issues)
-<!-- 关联相关的 issue, 例如: Fixes #123 -->
-Fixes #
+<!-- 关联相关的 issue, 例如: Fixes: 修复路径问题 (#123) -->
+Fixes: (# )
 
 ## 🛠️ 测试与验证 (Validation)
 <!-- 说明你做了哪些测试来确保代码质量 -->
@@ -27,5 +27,12 @@ Fixes #
 ## 📷 截图/附件 (Screenshots - Optional)
 <!-- 如果是 UI 变更或文档预览，请粘贴截图 -->
 
-## 📢 其他说明 (Notes)
-<!-- 其他需要 Reviewer 注意的事项 -->
+## 👥 协作署名 (Co-authored-by)
+<!-- 如果有其他协作者，请在此处列出其 GitHub 邮箱，以便在 Squash merge 时保留贡献记录 -->
+<!-- 格式: Co-authored-by: 姓名 <邮箱> -->
+
+---
+**⚠️ 注意：**
+
+1. 合并 PR 时请使用 `Squash and merge`，并确保将上方的 `Co-authored-by` 信息手动复制到 Commit Message 底部。
+2. 请只在个人仓库提交代码，不要直接在组织仓库修改。
