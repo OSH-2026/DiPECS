@@ -16,7 +16,7 @@ jobs:
 
       - name: Mirror Push
         env:
-          DEST_REPO: "github.com/OSH-2026/DiPECS.git"
+          DEST_REPO: "github.com/OSH-2026/DiPECS"
           PAT: ${{ secrets.OSH2026_SYNC_TOKEN }}
         run: |
           # 1. 设置远程仓库地址
