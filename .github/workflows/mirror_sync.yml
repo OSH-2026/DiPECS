@@ -19,6 +19,10 @@ jobs:
           DEST_REPO: "github.com/OSH-2026/DiPECS"
           PAT: ${{ secrets.OSH2026_SYNC_TOKEN }}
         run: |
+          if [ -z "$PAT" ]; then
+              echo "Error: OSH2026_SYNC_TOKEN is empty! Please check your Secrets settings."
+              exit 1
+          fi
           # 1. 设置远程仓库地址
           REMOTE_URL="https://x-access-token:${PAT}@${DEST_REPO}"
           
