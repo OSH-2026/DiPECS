@@ -32,7 +32,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Agent success rate (HumanEval, ReAct) | 48.8% → 50.6% with AIOS |
 | Agent success rate (GAIA, Autogen) | 7.3% → 9.7% |
 | Agent success rate (MINT-Code, Reflexion) | 32.4% → 33.8% |
@@ -56,7 +56,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | GAIA Level 1 success rate | 40.86% (35% relative improvement over prior SOTA 30.3%) |
 | GAIA Level 3 success rate | 6.12% (prior systems scored 0%) |
 | SheetCopilot-20 | 60% (vs. GPT-4 baseline 55%) |
@@ -77,7 +77,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Overall success rate | 86% (vs. GPT-4 baseline 42%, GPT-3.5 baseline 24%) |
 | Completion rate | 89.6% (vs. GPT-4's 47.8%) |
 | Average steps per task | 5.48 |
@@ -102,7 +102,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | SWE-bench (2,294 real GitHub issues) | 12.47% pass@1 (prior SOTA: 3.8%) |
 | HumanEvalFix | 87.7% pass@1 |
 | mini-swe-agent (100-line variant) | >74% on SWE-bench Verified |
@@ -122,7 +122,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Deep Memory Retrieval accuracy | 93.4% (vs. recursive summarization baseline 35.3%) |
 | Document QA | Scales to arbitrary document sizes via archival paging |
 | Multi-session chat | Significantly outperforms fixed-context baselines |
@@ -156,7 +156,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Latency savings | ~6 seconds per app startup |
 | Energy overhead | ≤2% daily battery |
 | Content staleness at launch | ~3 minutes |
@@ -177,7 +177,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Dataset scale | 10,360 users, 46.4M records, 3 months |
 | Evaluation metrics | HR@K, MRR@K (K=1,3,5) |
 | Status | Widely used as a baseline by subsequent works |
@@ -197,7 +197,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Precision | 70.6% |
 | Recall | 62.4% |
 | Inference speed | 6.58× faster than prior SOTA |
@@ -219,7 +219,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | HR@1 improvement over Appformer | +49.95% (Tsinghua dataset) |
 | HR@1 improvement over MAPLE | +18.25% (LSapp, cold-start) |
 | Tsinghua dataset | 1,000 users, 2,000 apps, 4.17M records, 7 days |
@@ -241,7 +241,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | HR@1 | 31.39% |
 | HR@5 | 66.50% |
 | MRR@5 | 46.58% |
@@ -264,7 +264,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | HR@1 | 31.92% / 42.68% (two partitioning strategies) |
 | Improvement over baselines | +4.75% / +7.89% |
 | Additional metrics | MRR@K, NDCG@K, F1 (macro) |
@@ -300,7 +300,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Static evaluation | Comparable to centralized baselines |
 | Dynamic evaluation | Superior privacy-utility trade-off vs. frequency/sequential baselines |
 | Privacy mechanism | Custom (non-standard DP; no epsilon reported) |
@@ -320,7 +320,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | F1-score | 0.9 (comparable to centralized baseline) |
 | Accuracy loss from obfuscation | 0.76% |
 
@@ -353,7 +353,7 @@
 **Benchmarks & Evaluation**:
 
 | Metric | Value |
-|--------|-------|
+| :--- | :--- |
 | Restricted bucket limits | 1 job/day (10-min session), 1 alarm/day |
 | Core constraint | ML model must consume less power than it saves |
 | Inspection | `adb shell am get-standby-bucket` |
@@ -395,7 +395,7 @@
 ### 5.1 System Feature Comparison
 
 | System | Year | Platform | LLM-Driven | Privacy Layer | Deterministic State Machine | Cloud-Local Separation | Proactive Intent |
-|--------|------|----------|------------|---------------|----------------------------|----------------------|-----------------|
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **DiPECS** | 2024–26 | Android + Linux | Yes (Cloud) | Yes (Air-gap) | Yes (Golden Traces) | Yes (Mechanism-Policy) | Yes |
 | AIOS | 2024 | Platform-agnostic | Yes | No | No | No | No |
 | OS-Copilot | 2024 | Desktop Linux | Yes (GPT-4) | No | No | No | No |
@@ -411,7 +411,7 @@
 ### 5.2 Benchmark & Evaluation Method Comparison
 
 | System | Benchmark Suite | Key Metrics | Dataset Scale | Reproducible? |
-|--------|----------------|-------------|---------------|--------------|
+| :--- | :--- | :--- | :--- | :--- |
 | AIOS | HumanEval, GAIA, MINT | Success Rate, Throughput, Latency | Synthetic tasks | Yes |
 | OS-Copilot | GAIA, SheetCopilot | Success Rate, Pass Rate | Synthetic tasks | Yes |
 | UFO | Custom Windows tasks | Success %, Completion %, Steps | 50 tasks, 9 apps | Partially |
@@ -433,12 +433,14 @@
 ### 6.1 Common Evaluation Metrics by Domain
 
 **LLM OS / Agent Systems**:
+
 - Success Rate (SR%) on standardized benchmarks (GAIA, SWE-bench, HumanEval)
 - Throughput (system calls/sec, tasks/min)
 - Latency (agent wait time, end-to-end task time)
 - Token consumption (cost efficiency)
 
 **App / Intent Prediction**:
+
 - HR@K (Hit Rate at K) — the dominant metric
 - MRR@K (Mean Reciprocal Rank)
 - NDCG@K (Normalized Discounted Cumulative Gain)
@@ -446,12 +448,14 @@
 - F1-score (macro/micro)
 
 **Proactive Systems**:
+
 - Latency savings (seconds reduced per interaction)
 - Energy overhead (% battery per day)
 - Content staleness (minutes)
 - User satisfaction scores (field studies)
 
 **Privacy**:
+
 - Privacy-utility trade-off curves
 - Differential privacy epsilon (ε) values (rarely reported)
 - Accuracy loss from privacy mechanisms (%)
@@ -460,7 +464,7 @@
 ### 6.2 Standard Datasets
 
 | Dataset | Domain | Scale | Availability |
-|---------|--------|-------|-------------|
+| :--- | :--- | :--- | :--- |
 | Tsinghua App Usage | App prediction | 1,000 users, 4.17M records, 7 days | Academic |
 | LSapp | App prediction | 292 users, 87 apps, 600K records | Academic |
 | SWE-bench | Code repair | 2,294 real GitHub issues | Public |
@@ -489,7 +493,7 @@ Based on this survey, DiPECS occupies a unique position at the intersection of s
 Based on the evaluation landscape above, a comprehensive DiPECS evaluation should cover:
 
 | Dimension | Metric | Precedent |
-|-----------|--------|-----------|
+| :--- | :--- | :--- |
 | Intent prediction accuracy | HR@1, HR@5, MRR@5 | Atten-Transformer, GNN+SA |
 | Prediction latency | End-to-end ms (local + cloud round-trip) | FALCON, DeepAPP |
 | Privacy overhead | Scrubbing latency (μs), data size reduction (%) | Novel |
