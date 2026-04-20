@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This is a mirror of [114August514/DiPECS](https://github.com/114August514/DiPECS). Please contribute there.
+
 # 🚀 DiPECS (Digital Intelligence Platform for Efficient Computing Systems)
 
 <!-- Badges Area: CI Status, Rust Version, NDK Version, License -->
