@@ -30,7 +30,7 @@ pub fn daemonize() {
             }
 
             // 将工作目录切换到根目录
-            let _ = libc::chdir(b"/\0".as_ptr() as *const _);
+            let _ = libc::chdir(c"/".as_ptr());
 
             // 关闭标准文件描述符
             let _ = libc::close(0);
@@ -38,7 +38,7 @@ pub fn daemonize() {
             let _ = libc::close(2);
 
             // 重定向到 /dev/null
-            let fd = libc::open(b"/dev/null\0".as_ptr() as *const _, libc::O_RDWR);
+            let fd = libc::open(c"/dev/null".as_ptr(), libc::O_RDWR);
             assert_eq!(fd, 0);
             let fd = libc::dup(0);
             assert_eq!(fd, 1);

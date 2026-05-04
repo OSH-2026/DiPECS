@@ -42,17 +42,28 @@ impl ActionBus {
     pub fn new(capacity: usize) -> Self {
         let (raw_events_tx, raw_events_rx) = mpsc::channel(capacity);
         let (intent_tx, intent_rx) = mpsc::channel(capacity);
-        Self { raw_events_rx, raw_events_tx, intent_rx, intent_tx }
+        Self {
+            raw_events_rx,
+            raw_events_tx,
+            intent_rx,
+            intent_tx,
+        }
     }
 
     /// 推送原始事件 (adapter 调用)
     pub async fn push_raw_event(&self, event: RawEvent) -> Result<(), PushError> {
-        self.raw_events_tx.send(event).await.map_err(|_| PushError::ChannelClosed)
+        self.raw_events_tx
+            .send(event)
+            .await
+            .map_err(|_| PushError::ChannelClosed)
     }
 
     /// 推送云端意图 (agent 调用)
     pub async fn push_intent(&self, batch: IntentBatch) -> Result<(), PushError> {
-        self.intent_tx.send(batch).await.map_err(|_| PushError::ChannelClosed)
+        self.intent_tx
+            .send(batch)
+            .await
+            .map_err(|_| PushError::ChannelClosed)
     }
 }
 

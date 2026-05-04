@@ -2,9 +2,9 @@
 //!
 //! 记录 `GoldenTrace` 并在回放时验证脱敏和策略的确定性。
 
+use aios_spec::traits::PrivacySanitizer;
 use aios_spec::traits::TraceValidator;
 use aios_spec::{GoldenTrace, ReplayResult, SanitizedEvent};
-use aios_spec::traits::PrivacySanitizer;
 
 /// 默认 Trace 引擎
 pub struct DefaultTraceEngine {
@@ -15,7 +15,9 @@ pub struct DefaultTraceEngine {
 impl DefaultTraceEngine {
     /// 创建 Trace 引擎
     pub fn new(sanitizer: impl PrivacySanitizer + Send + Sync + 'static) -> Self {
-        Self { sanitizer: Box::new(sanitizer) }
+        Self {
+            sanitizer: Box::new(sanitizer),
+        }
     }
 }
 
@@ -29,7 +31,8 @@ impl TraceValidator for DefaultTraceEngine {
             .map(|raw| self.sanitizer.sanitize(raw.clone()))
             .collect();
 
-        for (i, (actual, expected)) in actual_sanitized.iter()
+        for (i, (actual, expected)) in actual_sanitized
+            .iter()
             .zip(golden.expected_sanitized.iter())
             .enumerate()
         {

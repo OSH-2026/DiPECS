@@ -112,9 +112,9 @@ impl ProcReader {
             _ => ProcState::Unknown,
         };
 
-        // 跳过接下来的 15 个字段到达 threads (第20字段, index 19 in parts)
-        // 我们已经读了 state (fields[0]), 还需要跳过 fields[1..17]
-        let threads_str = parts.nth(17)?;
+        // state 已消耗, 其后的 16 个字段: ppid..nice
+        // num_threads 是剩余部分的第 17 个元素 (0-indexed: 16)
+        let threads_str = parts.nth(16)?;
         let threads: u32 = threads_str.parse().ok()?;
 
         Some((state, threads))
@@ -205,7 +205,10 @@ impl ProcReader {
 }
 
 /// 计算两次快照之间的增量变化
-pub fn diff_snapshots(prev: &HashMap<u32, ProcSnapshot>, curr: &HashMap<u32, ProcSnapshot>) -> Vec<ProcSnapshot> {
+pub fn diff_snapshots(
+    prev: &HashMap<u32, ProcSnapshot>,
+    curr: &HashMap<u32, ProcSnapshot>,
+) -> Vec<ProcSnapshot> {
     // 对于新出现的或者状态变化的进程, 返回当前快照
     curr.values()
         .filter(|c| {
@@ -214,8 +217,9 @@ pub fn diff_snapshots(prev: &HashMap<u32, ProcSnapshot>, curr: &HashMap<u32, Pro
                     p.vm_rss_kb != c.vm_rss_kb
                         || p.vm_swap_kb != c.vm_swap_kb
                         || p.oom_score != c.oom_score
-                        || !matches!(p.state, ProcState::Unknown)
-                }
+                        || p.threads != c.threads
+                        || p.state != c.state
+                },
                 None => true, // 新进程
             }
         })

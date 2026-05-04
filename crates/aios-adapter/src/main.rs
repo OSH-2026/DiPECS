@@ -40,8 +40,8 @@ use aios_adapter::{
     system_collector::SystemStateCollector,
 };
 use aios_core::action_bus::ActionBus;
-use aios_core::privacy_airgap::DefaultPrivacyAirGap;
 use aios_core::policy_engine::PolicyEngine;
+use aios_core::privacy_airgap::DefaultPrivacyAirGap;
 use aios_spec::RawEvent;
 
 /// 系统状态采集间隔
@@ -54,8 +54,7 @@ async fn main() -> anyhow::Result<()> {
     // 1. 初始化日志
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::from_default_env()
-                .add_directive("dipecs=info".parse()?)
+            tracing_subscriber::EnvFilter::from_default_env().add_directive("dipecs=info".parse()?),
         )
         .init();
 
@@ -98,10 +97,8 @@ async fn main() -> anyhow::Result<()> {
         // ---- /proc 轮询 ----
         {
             let snapshots = ProcReader::scan_all();
-            let curr_map: HashMap<u32, proc_reader::ProcSnapshot> = snapshots
-                .iter()
-                .map(|s| (s.pid, s.clone()))
-                .collect();
+            let curr_map: HashMap<u32, proc_reader::ProcSnapshot> =
+                snapshots.iter().map(|s| (s.pid, s.clone())).collect();
 
             let changed = proc_reader::diff_snapshots(&prev_proc_snapshots, &curr_map);
             for snap in &changed {

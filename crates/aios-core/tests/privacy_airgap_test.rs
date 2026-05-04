@@ -43,7 +43,7 @@ fn test_notification_file_detection() {
 
             // 不应该包含图片标签
             assert!(!semantic_hints.contains(&SemanticHint::ImageMention));
-        }
+        },
         _ => panic!("expected Notification event"),
     }
 
@@ -74,7 +74,7 @@ fn test_notification_image_detection() {
     match &sanitized.event_type {
         SanitizedEventType::Notification { semantic_hints, .. } => {
             assert!(semantic_hints.contains(&SemanticHint::ImageMention));
-        }
+        },
         _ => panic!("expected Notification event"),
     }
 }
@@ -95,9 +95,11 @@ fn test_fs_classification() {
     let sanitized = sanitizer.sanitize(raw);
 
     match &sanitized.event_type {
-        SanitizedEventType::FileActivity { extension_category, .. } => {
+        SanitizedEventType::FileActivity {
+            extension_category, ..
+        } => {
             assert_eq!(*extension_category, ExtensionCategory::Document);
-        }
+        },
         _ => panic!("expected FileActivity event"),
     }
 }
@@ -126,7 +128,7 @@ fn test_binder_notification_detection() {
         } => {
             assert_eq!(target_service, "notification");
             assert!(matches!(interaction_type, InteractionType::NotifyPost));
-        }
+        },
         _ => panic!("expected InterAppInteraction event"),
     }
 }

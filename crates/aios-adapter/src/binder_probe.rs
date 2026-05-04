@@ -61,7 +61,7 @@ impl BinderProbe {
         // 检查是否有 /sys/kernel/debug/tracing/events/binder/ 目录
         // 这是 Binder tracepoint 存在的标志
         let binder_trace = std::path::Path::new(
-            "/sys/kernel/debug/tracing/events/binder/binder_transaction/enable"
+            "/sys/kernel/debug/tracing/events/binder/binder_transaction/enable",
         );
 
         if binder_trace.exists() {

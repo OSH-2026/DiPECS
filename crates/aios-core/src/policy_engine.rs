@@ -58,7 +58,11 @@ impl PolicyEngine {
 
     /// 校验整个 IntentBatch, 返回每个意图的决策
     pub fn evaluate_batch(&self, batch: &IntentBatch) -> Vec<PolicyDecision> {
-        batch.intents.iter().map(|intent| self.evaluate_intent(intent)).collect()
+        batch
+            .intents
+            .iter()
+            .map(|intent| self.evaluate_intent(intent))
+            .collect()
     }
 
     /// 校验单个意图
@@ -93,7 +97,12 @@ impl PolicyEngine {
             .filter(|action| {
                 let action_name = format!("{:?}", action.action_type);
                 // 检查是否在禁止列表中
-                if self.config.blocked_actions.iter().any(|blocked| action_name.contains(blocked)) {
+                if self
+                    .config
+                    .blocked_actions
+                    .iter()
+                    .any(|blocked| action_name.contains(blocked))
+                {
                     return false;
                 }
                 // 检查紧迫度 — Deferred 的动作不在此次执行

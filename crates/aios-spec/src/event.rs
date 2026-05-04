@@ -63,7 +63,7 @@ pub struct ProcStateEvent {
     pub state: ProcState,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ProcState {
     Running,
     Sleeping,
@@ -191,9 +191,7 @@ pub enum SanitizedEventType {
         is_hot_file: bool,
     },
     /// 屏幕状态
-    Screen {
-        state: ScreenState,
-    },
+    Screen { state: ScreenState },
     /// 系统状态快照
     SystemStatus {
         battery_pct: Option<u8>,
