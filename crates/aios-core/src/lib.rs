@@ -1,14 +1,11 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # aios-core — DiPECS 核心引擎
+//!
+//! 职责: 事件聚合、隐私脱敏、策略校验、Trace 回放。
+//! 内部逻辑保持同步 (Sync), 只在系统边界使用 async。
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#![deny(unsafe_op_in_unsafe_fn)]
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod privacy_airgap;
+pub mod action_bus;
+pub mod policy_engine;
+pub mod trace_engine;

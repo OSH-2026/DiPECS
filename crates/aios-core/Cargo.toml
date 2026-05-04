@@ -7,3 +7,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+aios-spec = { workspace = true }
+tokio = { workspace = true, features = ["sync", "macros"] }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }

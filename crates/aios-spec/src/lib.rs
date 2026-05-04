@@ -1,14 +1,27 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # aios-spec — DiPECS 宪法层
+//!
+//! 零内部依赖。定义全系统的核心数据结构、Trait 和 IPC 协议。
+//! 所有跨模块通信必须依赖此层的抽象。
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#![deny(unsafe_op_in_unsafe_fn)]
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+mod event;
+mod context;
+mod intent;
+mod trace;
+
+pub use event::*;
+pub use context::*;
+pub use intent::*;
+pub use trace::*;
+
+/// aios-spec 定义的公共 trait
+pub mod traits {
+    mod privacy;
+    mod executor;
+    mod trace_validator;
+
+    pub use privacy::PrivacySanitizer;
+    pub use executor::ActionExecutor;
+    pub use trace_validator::TraceValidator;
 }

@@ -41,6 +41,7 @@ anyhow = "1.0"      # 方便的顶级错误处理
 thiserror = "1.0"   # 定义结构化系统错误
 tracing = "0.1"     # 语义化追踪
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
 
 # --- 移动端与底层 ---
 jni = "0.21"        # Android JNI 交互
