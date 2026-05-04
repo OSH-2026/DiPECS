@@ -10,7 +10,7 @@
 //!
 //! ## 数据流
 //!
-//! ```
+//! ```text
 //! [Kernel] ──eBPF──→ BinderProbe ──→ RawEvent ──→ ActionBus──→PrivacyAirGap
 //! [ /proc] ──read──→ ProcReader  ──→ RawEvent ──→            ↓
 //! [  sys ] ──read──→ SysCollector──→ RawEvent ──→        SanitizedEvent

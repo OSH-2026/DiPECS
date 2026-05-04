@@ -19,7 +19,6 @@ dependencies = [
  "aios-spec",
  "anyhow",
  "libc",
- "serde_json",
  "thiserror",
  "tokio",
  "tracing",
@@ -42,7 +41,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "tracing",
  "uuid",
 ]
 
@@ -55,7 +53,6 @@ name = "aios-spec"
 version = "0.1.0"
 dependencies = [
  "serde",
- "serde_json",
 ]
 
 [[package]]

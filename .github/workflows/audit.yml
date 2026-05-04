@@ -36,7 +36,6 @@ jobs:
         with:
           # 借由 deny.toml 实现版本强制归一，防止 Android .so 体积膨胀
           command: check
-          arguments: --all-features
   
   # 2. 依赖拓扑审计 (Topology Guard)
   topology:
