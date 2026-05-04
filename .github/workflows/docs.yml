@@ -42,8 +42,8 @@ jobs:
         with:
           tool: mdbook,mdbook-graphviz,cargo-deps
 
-      - name: Install System Dependencies (Graphviz)
-        run: sudo apt-get update && sudo apt-get install -y graphviz
+      - name: Install System Dependencies (Graphviz, lld)
+        run: sudo apt-get update && sudo apt-get install -y graphviz lld
 
       - name: Verify Tools
         run: |
