@@ -6,6 +6,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 pub mod action_bus;
+pub mod context_builder;
 pub mod policy_engine;
 pub mod privacy_airgap;
 pub mod trace_engine;

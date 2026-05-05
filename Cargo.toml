@@ -51,6 +51,8 @@ libc = "0.2"        # 系统底层调用
 # 以后子模块想引用 spec 模块，只需写 aios-spec = { workspace = true } 即可
 aios-spec = { path = "crates/aios-spec" }
 aios-core = { path = "crates/aios-core" }
+aios-agent = { path = "crates/aios-agent" }
+aios-kernel = { path = "crates/aios-kernel" }
 aios-adapter = { path = "crates/aios-adapter" }
 
 # 5. 编译优化配置 (Profile)

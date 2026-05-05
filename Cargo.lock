@@ -15,7 +15,9 @@ dependencies = [
 name = "aios-adapter"
 version = "0.1.0"
 dependencies = [
+ "aios-agent",
  "aios-core",
+ "aios-kernel",
  "aios-spec",
  "anyhow",
  "libc",
@@ -28,6 +30,11 @@ dependencies = [
 [[package]]
 name = "aios-agent"
 version = "0.1.0"
+dependencies = [
+ "aios-spec",
+ "tracing",
+ "uuid",
+]
 
 [[package]]
 name = "aios-cli"
@@ -47,6 +54,11 @@ dependencies = [
 [[package]]
 name = "aios-kernel"
 version = "0.1.0"
+dependencies = [
+ "aios-spec",
+ "libc",
+ "tracing",
+]
 
 [[package]]
 name = "aios-spec"

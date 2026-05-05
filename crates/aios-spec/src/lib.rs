@@ -21,7 +21,7 @@ pub mod traits {
     mod privacy;
     mod trace_validator;
 
-    pub use executor::ActionExecutor;
+    pub use executor::{ActionExecutor, ActionResult};
     pub use privacy::PrivacySanitizer;
     pub use trace_validator::TraceValidator;
 }
