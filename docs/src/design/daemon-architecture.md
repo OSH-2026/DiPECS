@@ -506,12 +506,12 @@ pub struct ReplayResult {
 │  $ adb push target/aarch64-linux-android/       │
 │         release/dipecsd /data/local/tmp/        │
 │  $ adb shell                                    │
-│    su                                            │
+│    su                                           │
 │    /data/local/tmp/dipecsd --no-daemon --verbose│
 │                                                 │
-│  以 root 运行 (模拟器默认 root), 验证:          │
+│  以 root 运行 (模拟器默认 root), 验证:            │
 │  - Binder tracepoint 读取                       │
-│  - /proc 全量解析                               │
+│  - /proc 全量解析                                │
 │  - 脱敏输出正确性                                │
 │  - Golden Trace 录制与回放                       │
 └─────────────────────────────────────────────────┘
@@ -525,20 +525,3 @@ pub struct ReplayResult {
 | **模拟器 system image 预置** | daemon 作为 init service 自启, 展示"开机即运行" | 中, 需要打包 system image |
 | **真机 (root / custom ROM)** | 真实设备上的端到端演示 | 高, 需要合适的测试机 |
 
----
-
-## 七、与 MEMO-Appflow 的对接
-
-两个组可以形成互补:
-
-```
-MEMO-Appflow (App 层)          DiPECS (System 层)
-─────────────────────          ──────────────────
-UsageStats 采集 ◀────────────  Daemon 提供的更精确的进程生命周期事件
-Transformer 预测              (不做预测, 专注提供高质量结构化输入)
-Threshold/AppFlow 策略 ──────▶ Daemon 执行真正的 oom_score_adj 调整
-Intent 启动预加载             Daemon 做 posix_fadvise 文件预读
-Room 数据库                    Daemon 的 Golden Trace 存储
-```
-
-对接接口: DiPECS 产出 `StructuredContext` (JSON), MEMO-Appflow 的预测器可以直接消费。
