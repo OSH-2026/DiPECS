@@ -24,7 +24,6 @@ fn test_prewarm_with_target_succeeds() {
     // latency_us 在极快机器上可能为 0 (亚微妙级执行)
 }
 
-
 #[test]
 fn test_prewarm_without_target_fails() {
     let executor = DefaultActionExecutor;
