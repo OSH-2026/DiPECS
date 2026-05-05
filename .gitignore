@@ -65,6 +65,7 @@ temp/
 *.bak
 *.local
 .codex
+.gitignore
 CLAUDE.md
 .claude/
 /mytyp/template/
