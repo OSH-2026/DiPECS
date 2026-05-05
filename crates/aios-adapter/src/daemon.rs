@@ -52,28 +52,33 @@ pub fn daemonize() {
 
 /// 安装信号处理器 (SIGTERM, SIGINT)
 ///
-/// 收到信号时优雅退出。
+/// 使用 tokio::signal 实现, 零 unsafe, 零平台特定代码。
+/// 收到信号后通过 broadcast channel 通知主循环优雅退出。
 pub fn install_signal_handlers() -> tokio::sync::broadcast::Receiver<()> {
     let (tx, rx) = tokio::sync::broadcast::channel::<()>(1);
 
-    #[cfg(target_os = "linux")]
+    // SIGINT (Ctrl+C) — 跨平台
+    let tx_ctrlc = tx.clone();
+    tokio::spawn(async move {
+        if tokio::signal::ctrl_c().await.is_ok() {
+            tracing::info!("received SIGINT, initiating graceful shutdown");
+            let _ = tx_ctrlc.send(());
+        }
+    });
+
+    // SIGTERM — Unix only
+    #[cfg(unix)]
     {
-        let tx = tx.clone();
-        // SAFETY: 注册信号处理器。
-        // sigaction 是 async-signal-safe 的。
-        unsafe {
-            libc::signal(libc::SIGTERM, handle_signal as libc::sighandler_t);
-            libc::signal(libc::SIGINT, handle_signal as libc::sighandler_t);
-        }
-
-        extern "C" fn handle_signal(_sig: i32) {
-            tracing::info!("received shutdown signal");
-            process::exit(0);
-        }
-
-        // 注意: 上述信号处理器使用 process::exit(0) 简单退出。
-        // 生产环境中应使用管道或 eventfd 通知主循环优雅退出。
-        let _ = tx; // 保持 tx 存活
+        let tx_term = tx.clone();
+        tokio::spawn(async move {
+            if let Ok(mut sigterm) =
+                tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            {
+                sigterm.recv().await;
+                tracing::info!("received SIGTERM, initiating graceful shutdown");
+                let _ = tx_term.send(());
+            }
+        });
     }
 
     rx
