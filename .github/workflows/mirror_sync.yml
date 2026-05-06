@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0 # 获取完整的历史记录
           lfs: true
@@ -38,19 +38,13 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          # 4. 动态修改 README (仅在当前运行环境中修改)
-          # 使用 sed 在第一行插入镜像声明
-          sed -i '1i > [!IMPORTANT]\n> This is a mirror of [114August514/DiPECS](https://github.com/114August514/DiPECS). Please contribute there.\n' README.md
+          # 4. 仅当 README 尚无镜像声明时才插入 (幂等)
+          if ! grep -Fq "This is a mirror of" README.md; then
+            sed -i '1i > [!IMPORTANT]\n> This is a mirror of [114August514/DiPECS](https://github.com/114August514/DiPECS). Please contribute there.\n' README.md
+            git add README.md
+            git commit -m "chore: add mirror notice to README" || echo "No changes"
+          fi
 
-          # 5. 提交修改
-          git add README.md
-          git commit -m "chore: add mirror notice to README" || echo "No changes"         
-
-          # 6. 镜像推送
-          # - 解释：
-          #   "refs/heads/*:refs/heads/*" -> 同步所有分支
-          #   "refs/tags/*:refs/tags/*"   -> 同步所有标签
-          #   --force -> 强制覆盖
-          #   --prune -> 跟随删除
+          # 5. 镜像推送 — 同步所有分支和标签
           git lfs install
-          git push "$REMOTE_URL" "HEAD:refs/heads/main" "refs/tags/*:refs/tags/*" --force --prune
+          git push "$REMOTE_URL" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*" --force --prune
