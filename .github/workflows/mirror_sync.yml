@@ -46,7 +46,9 @@ jobs:
           fi
 
           # 5. 为所有远程分支创建本地跟踪分支（避免 detached HEAD 导致 --prune 误删）
+          current="$(git rev-parse --abbrev-ref HEAD)"
           for remote in $(git branch -r | grep -v '\->' | grep '^ *origin/' | sed 's/^ *origin\///'); do
+            [ "$remote" = "$current" ] && continue
             git branch --force "$remote" "origin/$remote"
           done
 
