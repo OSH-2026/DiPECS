@@ -2,7 +2,7 @@
 theme: seriph
 title: DiPECS — 云-端协同的分布式意图操作系统
 info: |
-  DiPECS v0.2 中期报告
+  DiPECS v0.3 中期报告
 class: text-center
 transition: slide-left
 duration: 35min
@@ -15,7 +15,7 @@ duration: 35min
 Digital Intelligence Platform for Efficient Computing Systems
 
 <div class="pt-12">
-  <span class="text-sm opacity-50">v0.2 · 2026.05</span>
+  <span class="text-sm opacity-50">v0.3 · 2026.05</span>
 </div>
 
 ---
@@ -31,7 +31,7 @@ Digital Intelligence Platform for Efficient Computing Systems
 - **全称**: Digital Intelligence Platform for Efficient Computing Systems
 - **定位**: Cloud-LLM 驱动的分布式意图操作系统原型
 - **运行平台**: Android API 33 (AOSP)
-- **当前版本**: v0.2 (2026.05)
+- **当前版本**: v0.3 (2026.05)
 - **许可证**: Apache 2.0
 
 </div>
@@ -58,12 +58,12 @@ Digital Intelligence Platform for Efficient Computing Systems
 </div>
 
 <div class="p-2 border border-primary/20 rounded">
-  <div class="text-lg font-bold">63</div>
+  <div class="text-lg font-bold">62</div>
   <div class="opacity-60">Tests (all pass)</div>
 </div>
 
 <div class="p-2 border border-primary/20 rounded">
-  <div class="text-lg font-bold">~3,500</div>
+  <div class="text-lg font-bold">~4,300</div>
   <div class="opacity-60">Lines of Rust</div>
 </div>
 
@@ -77,7 +77,7 @@ Digital Intelligence Platform for Efficient Computing Systems
 
 # 一、What — 结构化信号从哪里来
 
-**7 种采集源 → 7 种 RawEvent 变体**。所有信号在 Android/Linux 内核层面直接采集，不经过 App 层：
+**8 种采集源 → 8 种 RawEvent 变体**。所有信号在 Android/Linux 内核及系统服务层面采集，不经过 App 层：
 
 <div class="grid grid-cols-2 gap-2 mt-2 text-xs w-full px-0">
 
@@ -85,6 +85,7 @@ Digital Intelligence Platform for Efficient Computing Systems
 
 | 采集源 | 采集方式 | 对应 RawEvent |
 |:---|:---|:---|
+| 应用切换 | UsageStatsManager | `AppTransition` |
 | Binder 事务 | eBPF tracepoint | `BinderTransaction` |
 | /proc 文件系统 | 每 100ms 轮询差分 | `ProcStateChange` |
 | 文件系统访问 | fanotify | `FileSystemAccess` |
@@ -129,17 +130,18 @@ Digital Intelligence Platform for Efficient Computing Systems
 
 <div>
 
-### RawEvent (7 variants, 含 PII)
+### RawEvent (8 variants, 含 PII)
 
 ```rust
 pub enum RawEvent {
-    BinderTransaction(BinderTxEvent),   // service + method + payload_size
-    ProcStateChange(ProcStateEvent),     // pid, rss, swap, oom_score, threads
-    FileSystemAccess(FsAccessEvent),     // file_path ⚠️, extension, access_type
+    AppTransition(AppTransitionRawEvent), // package, activity, foreground/background
+    BinderTransaction(BinderTxEvent),     // service + method + payload_size
+    ProcStateChange(ProcStateEvent),       // pid, rss, swap, oom_score, threads
+    FileSystemAccess(FsAccessEvent),       // file_path ⚠️, extension, access_type
     NotificationPosted(NotificationRawEvent),  // raw_title ⚠️, raw_text ⚠️
     NotificationInteraction(NotificationInteractionRawEvent),
     ScreenState(ScreenStateEvent),
-    SystemState(SystemStateEvent),       // battery, network, ringer_mode
+    SystemState(SystemStateEvent),         // battery, network, ringer_mode
 }
 ```
 
@@ -149,14 +151,17 @@ pub enum RawEvent {
 
 <div>
 
-### SanitizedEvent (6 variants, 零 PII)
+### SanitizedEvent (7 variants, 零 PII)
 
 ```rust
 pub enum SanitizedEventType {
-    InterAppInteraction {  // 从 Binder 推断
+    AppTransition {         // 从前台 App 推断
+        package_name, activity_class, transition
+    },
+    InterAppInteraction {   // 从 Binder 推断
         source_package, target_service, interaction_type
     },
-    Notification {         // 正文已脱敏
+    Notification {          // 正文已脱敏
         title_hint: TextHint, text_hint: TextHint,
         semantic_hints: Vec<SemanticHint>
     },
@@ -231,20 +236,21 @@ pub enum SanitizedEventType {
 
 # What · 项目范围与当前进度
 
-**当前版本 v0.2** — 端到端处理管道已完全打通
+**当前版本 v0.3** — 端到端处理管道已完全打通，新增 Android 端本地采集探针
 
 <div class="grid grid-cols-2 gap-4 mt-4">
 
 <div>
 
-已完成模块 (6 个):
+已完成模块 (7 个):
 
-- `aios-spec` 宪法层 · 全部数据类型
+- `aios-spec` 宪法层 · 全部数据类型 (含 AppTransition)
 - `aios-core` 逻辑层 · 事件总线 / 脱敏 / 策略 / 上下文聚合
-- `aios-adapter` 适配层 · /proc / eBPF / 系统状态采集
+- `aios-adapter` 适配层 · /proc / eBPF / 系统状态 / CollectionStats 采集
 - `aios-kernel` 内核层 · 动作执行骨架
 - `aios-agent` 业务层 · MockCloudProxy + daemon 主循环
-- 63 个测试 · 全部通过
+- `apps/android-collector` · Kotlin Phase-1 采集探针 (4 数据源 + JSONL + 云端上传)
+- 62 个测试 · 全部通过
 
 </div>
 
@@ -255,17 +261,58 @@ pub enum SanitizedEventType {
 - Cloud LLM HTTPS 真实通信
 - 真实 syscall 动作执行
 - Fanotify 文件监控
-- Notification Bridge (Kotlin JNI)
+- Android 端采集器 → daemon 信号管道
 - Golden Trace 录制接入主循环
-- Android SDK/真机验证
+- Android 真机端到端验证
 
 </div>
 
 </div>
+
+
 
 ---
 
-# 二、Why — 为什么要做 DiPECS
+# What · Android Phase-1 采集探针 — `apps/android-collector`
+
+**Kotlin Android 应用** — 在设备上直接采集行为信号，支持逐个数据源的接口筛选
+
+<div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+
+<div>
+
+### 4 个数据源
+
+| 数据源 | 实现方式 | 采集事件 |
+|:---|:---|:---|
+| 应用使用 | `UsageStatsManager` | 前台 App 切换 (→ `AppTransition`) |
+| 通知 | `NotificationListenerService` | 通知发布/移除 (→ `NotificationPosted`) |
+| 无障碍 | `AccessibilityService` | 窗口、点击、焦点、文本变化 |
+| 设备上下文 | 系统 API 查询 | 电量、网络、屏幕、铃声、DND |
+
+</div>
+
+<div>
+
+### 关键特性
+
+- **Source Toggle**: 主界面逐一开关每个数据源，Phase-1 屏筛工作流
+- **JSONL 存储**: 事件写入 `<files>/traces/actions.jsonl`
+- **云端上传**: mock / llm 双模式，周期性上传最近 100 条事件
+- **RawEvent 对齐**: 每条 JSONL 事件的 `rawEvent` 字段使用和 `aios-spec::RawEvent` 一致的 JSON 格式
+- **CI**: GitHub Actions 自动构建 debug APK + 单元测试 + 产物上传
+
+</div>
+
+</div>
+
+<div v-click class="mt-4 p-3 border border-primary/20 rounded text-sm">
+
+**与 Rust daemon 的关系**: android-collector 是 **Phase-1 探针**，用于 Android 接口可行性验证。各数据源筛选通过后，对应的采集逻辑将提升到 `aios-adapter` 的 Rust daemon 中（如 NotificationListenerService → Kotlin↔Rust JNI 桥接）。当前二者为 **互补关系**：daemon 走内核层 (/proc, eBPF)，collector 走系统服务层 (NotificationListener, Accessibility)。
+
+</div>
+
+
 
 <v-clicks>
 
@@ -363,6 +410,10 @@ fn sanitize(&self, raw: RawEvent) -> SanitizedEvent
 
 ```mermaid {scale: 0.55}
 graph LR
+    subgraph L6["apps/android-collector · 采集探针 (Kotlin)"]
+        Collector["NotificationListener<br/>AccessibilityService<br/>UsageStatsManager"]
+    end
+
     subgraph L5["aios-agent · 业务层"]
         Main["dipecsd 守护进程"]
         Cloud["MockCloudProxy → 后续替换 HTTPS"]
@@ -391,6 +442,7 @@ graph LR
 
     L4 --> L3 --> L2 --> L1
     L5 --> L4
+    Collector -.->|"JSONL + HTTP Upload (mock/llm)"| L5
 ```
 
 ---
@@ -400,6 +452,7 @@ graph LR
 ```mermaid {scale: 0.6}
 sequenceDiagram
     participant Kernel as Android Kernel
+    participant Collector as android-collector (Kotlin)
     participant Adapter as aios-adapter
     participant Core as aios-core
     participant Agent as aios-agent
@@ -407,6 +460,7 @@ sequenceDiagram
 
     Kernel->>Adapter: Binder tx / /proc / sysfs
     Adapter->>Core: RawEvent (mpsc channel)
+    Collector->>Agent: JSONL trace + HTTP Upload (mock/llm)
     Core->>Core: PrivacyAirGap.sanitize()
     Note over Core: RawEvent → SanitizedEvent<br/>原始字符串 drop
     Core->>Core: WindowAggregator (10s 窗口)
@@ -431,8 +485,8 @@ sequenceDiagram
 
 ### 核心数据类型
 
-- `RawEvent` — 7 种原始事件 (含 PII)
-- `SanitizedEvent` — 6 种脱敏后事件 (无 PII)
+- `RawEvent` — 8 种原始事件 (含 PII)
+- `SanitizedEvent` — 7 种脱敏后事件 (无 PII)
 - `StructuredContext` — 发送云端的唯一数据格式
 - `IntentBatch` — 云端返回的结构化决策
 - `GoldenTrace` — 确定性回放记录
@@ -605,6 +659,10 @@ graph LR
         SC["SystemCollector<br/>每 30s"]
     end
 
+    subgraph T0["外部 · Android Collector (Kotlin)"]
+        AC["UsageStats / Notification / Accessibility<br/>JSONL + HTTP Upload"]
+    end
+
     subgraph T2["Task 2 · 处理 (主 task)"]
         S["sanitize()"]
         W["WindowAggregator<br/>10s 窗口"]
@@ -614,6 +672,7 @@ graph LR
     end
 
     T1 -->|"raw_events_tx<br/>(mpsc channel)"| S
+    AC -.->|"mock/llm HTTP"| M
     S --> W --> M --> P --> E
 ```
 
@@ -668,14 +727,15 @@ graph LR
 
 <div>
 
-### 已完成 (v0.2)
+### 已完成 (v0.3)
 
 | 指标 | 数值 |
 |:---|:---|
-| 代码量 | ~3,500 行 Rust |
-| Crates | 6 个 (spec/core/kernel/adapter/agent/cli) |
-| 测试 | 63 个 · 全部通过 |
+| 代码量 | ~4,300 行 Rust + ~1,500 行 Kotlin |
+| Crates | 6 个 (spec/core/kernel/adapter/agent/cli) + 1 Android App |
+| 测试 | 62 个 Rust · 全部通过 + Android Unit Test |
 | 端到端管道 | 采集→脱敏→聚合→推理→校验→执行 |
+| 新增 | AppTransition 事件 / android-collector / CollectionStats / CI |
 | 编译 | `x86_64-linux-gnu` / `aarch64-linux-android` |
 | Lint | clippy 零警告 |
 
@@ -683,12 +743,12 @@ graph LR
 
 <div>
 
-### 近期计划 (v0.3+)
+### 近期计划 (v0.4+)
 
 - **Cloud LLM**: MockCloudProxy → 真实 HTTPS
 - **Action Executor**: 骨架 → `posix_fadvise` / `process_madvise` / `/proc/pid/oom_score_adj`
 - **文件监控**: FanotifyMonitor 实现
-- **通知桥接**: Kotlin JNI NotificationListenerService
+- **采集器集成**: android-collector → daemon 信号管道 (Kotlin↔Rust 桥接)
 - **Trace 集成**: GoldenTrace 录制接入主循环
 - **真机验证**: Android 模拟器 / 真机端到端演示
 
@@ -710,7 +770,7 @@ graph LR
 
 4. **提供了确定性验证能力** — Golden Trace 回放确保任何代码修改不会引入隐私泄露或决策偏差
 
-5. **打通了端到端管道** — 63 个测试覆盖从 /proc 到 ActionExecutor 的完整链路
+5. **打通了端到端管道** — 62 个测试覆盖从 /proc 到 ActionExecutor 的完整链路
 
 </v-clicks>
 
@@ -723,7 +783,7 @@ graph LR
 ---
 
 
-# DiPECS v0.2
+# DiPECS v0.3
 
 Digital Intelligence Platform for Efficient Computing Systems
 

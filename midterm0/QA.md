@@ -1,4 +1,4 @@
-# DiPECS v0.2 — 答辩 Q&A 预案
+# DiPECS v0.3 — 答辩 Q&A 预案
 
 ---
 
@@ -78,7 +78,7 @@
 
 3. **跨编译零成本**: Rust 支持 `x86_64-linux-gnu`→桌面开发、`aarch64-linux-android`→真机部署，同一份代码、同一个编译器，无需像 C/C++ 那样处理 NDK toolchain 的 ABI 兼容问题。
 
-4. **团队方面**: 三人的核心贡献者都有 Rust 经验。且项目已产出 3,500+ 行 Rust 代码和 63 个测试，学习曲线前期成本已被摊销。
+4. **团队方面**: 三人的核心贡献者都有 Rust 经验。且项目已产出 4,300+ 行 Rust 代码和 62 个测试，学习曲线前期成本已被摊销。
 
 ---
 
@@ -94,18 +94,60 @@
 
 ---
 
-### Q7: 63 个测试覆盖了什么？能证明系统正确吗？
+3. **隐私问题已经解决**: 因为 PrivacyAirGap 保证了发送给云端的数据不含 PII，所以"用云端"的隐私代价和"用端侧"是等价的。
+
+---
+
+### Q6b: v0.3 新增了 `apps/android-collector` (Kotlin 应用)，它和 Rust daemon (`aios-adapter`) 是什么关系？为什么不全部用 Rust 采集？
+
+**A:**
+
+1. **角色互补**: android-collector 是 **Phase-1 探针**，用于验证"某个 Android 接口能观测到什么信号"。daemon (`aios-adapter`) 是**生产级采集**，运行在系统层。探针筛选通过的接口，才提升到 daemon 中。
+
+2. **技术分工**:
+   - `apps/android-collector` (Kotlin): 走 Android SDK API — `NotificationListenerService`、`AccessibilityService`、`UsageStatsManager`。这些接口无需 root，仅需用户授权，可以直接在普通设备上验证。
+   - `aios-adapter` (Rust): 走 Linux 内核接口 — `/proc`、`/sys/class`、eBPF tracepoint。需要系统权限，但可获取更底层的信号（Binder IPC、进程状态）。
+
+3. **工作流**:
+   - Phase 1: 在 android-collector 中逐一开启数据源 → 做可重复动作 → 检查 JSONL trace → 决定是否值得提升。
+   - Phase 2: 通过筛选的数据源 → 在 `aios-spec` 中定义对应的 `RawEvent` 变体 → Rust daemon 中实现高效采集。
+   - 当前状态: `AppTransition` (来自 UsageStatsManager) 已完成 Phase 1 筛选并加入 `aios-spec`。
+
+4. **为什么不全部用 Rust**: Android SDK 的 `NotificationListenerService` 等必须通过 Android Context / Binder 框架注册，在 Kotlin/Java 层实现远比为 daemon 写 JNI 桥接更简单。未来需要持续采集时，会通过 JNI 将 Kotlin 采集的数据注入 Rust 管道。
+
+---
+
+### Q6c: 为什么需要增加 `AppTransition` 事件？它和已有的 Binder 事务有什么不同？
+
+**A:**
+
+1. **信号来源不同**:
+   - `BinderTransaction`: 来自 eBPF tracepoint，是**内核层 IPC 信号**。能观测到所有 Binder 调用（如 `ActivityManagerService.startActivity`），但需要 root + eBPF 支持。
+   - `AppTransition`: 来自 `UsageStatsManager`，是 **Android 系统服务层信号**。直接报告"哪个 App 进入前台/后台"，无需 root，仅需用户授权 Usage Access。
+
+2. **互补性**:
+   - Binder 信号是 **"看到你要启动 App 了"** — 可以看到 `startActivity` 的 Binder 调用，比 App 实际到前台提前数十至数百毫秒。
+   - AppTransition 信号是 **"App 已经切换完成了"** — 是确定性的前后台状态确认。
+
+3. **实用性**: `AppTransition` 无需 root 即可获取，使系统在非 root 设备上也能获得核心预测信号（"用户切换到了微信" → 预热微信相关服务）。Binder 信号提供更早的预测窗口（IPC 发生 → App 前台），但需要 root。两者配合形成**两级预测窗口**。
+
+4. **脱敏处理**: `AppTransition` 中的 `package_name` 是应用标识（非用户数据），脱敏后直接保留在 `SanitizedEvent::AppTransition` 中，无需额外处理。
+
+---
+
+### Q7: 62 个测试覆盖了什么？能证明系统正确吗？
 
 **A:**
 
 | 测试文件 | 数量 | 覆盖内容 |
 |:---|:---|:---|
-| `privacy_airgap_test.rs` | 5 | 通知文件/图片检测、文件扩展名分类、Binder 事务解析 |
-| `context_builder_test.rs` | 17 | 窗口生命周期、到期判定、摘要聚合（app/通知/语义/文件/系统状态）、SourceTier 逻辑 |
-| `policy_engine_test.rs` | 11 | 风险等级检查、置信度边界值 (0.3)、紧迫度过滤、黑名单、批量上限 |
-| `action_bus_test.rs` | 7 | 事件发送/接收、通道关闭检测 |
-| `mock_cloud_proxy_test.rs` | 9 | 6 种信号→意图映射、空窗口兜底、多信号组合 |
+| `context_builder_test.rs` | 18 | 窗口生命周期、到期判定、摘要聚合（app/通知/语义/文件/系统状态）、SourceTier 逻辑 |
 | `action_executor_test.rs` | 14 | 5 种动作执行、批处理、延迟测量 |
+| `policy_engine_test.rs` | 11 | 风险等级检查、置信度边界值 (0.3)、紧迫度过滤、黑名单、批量上限 |
+| `mock_cloud_proxy_test.rs` | 10 | 6 种信号→意图映射、空窗口兜底、多信号组合 |
+| `privacy_airgap_test.rs` | 6 | 通知文件/图片检测、文件扩展名分类、Binder + AppTransition 事务解析 |
+| `collection_stats_test.rs` | 2 | 采集统计计数、summary_line 输出 |
+| `action_bus_test.rs` | 1 | 事件发送/接收 |
 
 覆盖策略：**每个模块的每个分支至少 1 个测试，边界值有专门测试**（如 `confidence = 0.3` 精确边界、空窗口 close 返回 None、Daemon + PublicApi 共存时 SourceTier 优先级）。
 
@@ -219,7 +261,7 @@
 
 **A:** 诚实回答：**目前没有**。
 
-- v0.2 的核心目标是**打通端到端管道**和**验证隐私架构正确性**（63 个测试全部通过）。
+- v0.2 的核心目标是**打通端到端管道**和**验证隐私架构正确性**（62 个测试全部通过）。
 - 下一步 (v0.3) 计划在 Android 模拟器上做**冷启动延迟对比 benchmark**：相同条件下，有预热 vs 无预热的 App 启动时间差。
 - 更长期的计划是做**用户实验**（10-20 名受试者使用 1 周，记录主观评分 + 客观延迟数据）。
 
@@ -247,5 +289,6 @@
 | "为什么不用端侧模型？" | 架构支持，当前用云端是能力选择不是架构限制。 |
 | "怎么保证隐私？" | Rust ownership 保证脱敏后原始字符串物理不可访问，不是承诺，是编译器强制。 |
 | "预热错了怎么办？" | 预热是投机操作，错了无副作用，Android LMK 30 秒自动回收。 |
-| "需要 root 吗？" | eBPF 需要 root，但系统支持降级到仅用 PublicApi 工作。 |
-| "有多少代码？" | 3,500+ 行 Rust，6 个 crate，63 个测试全部通过。 |
+| "需要 root 吗？" | eBPF 需要 root，但系统支持降级到仅用 PublicApi 工作。android-collector 完全无需 root。 |
+| "Kotlin 和 Rust 怎么分工？" | Kotlin 做 Android SDK 级采集探针，Rust 做内核级 daemon。探针筛选通过的接口提升到 daemon。 |
+| "有多少代码？" | 4,300+ 行 Rust，6 个 crate，62 个测试全部通过 + Android App ~1,500 行 Kotlin。 |
