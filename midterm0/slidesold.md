@@ -273,41 +273,7 @@ pub enum SanitizedEventType {
 
 ---
 
-# What · Android Phase-1 采集探针 — `apps/android-collector`
-
-**Kotlin Android 应用** — 在设备上直接采集行为信号，支持逐个数据源的接口筛选
-
-### 4 个数据源
-
-| 数据源 | 实现方式 | 采集事件 |
-|:---|:---|:---|
-| 应用使用 | `UsageStatsManager` | 前台 App 切换 (→ `AppTransition`) |
-| 通知 | `NotificationListenerService` | 通知发布/移除 (→ `NotificationPosted`) |
-| 无障碍 | `AccessibilityService` | 窗口、点击、焦点、文本变化 |
-| 设备上下文 | 系统 API 查询 | 电量、网络、屏幕、铃声、DND |
-
----
-
-# What · Android Phase-1 采集探针 — 关键特性
-
-### 关键特性
-
-- **Source Toggle**: 主界面逐一开关每个数据源，Phase-1 屏筛工作流
-- **JSONL 存储**: 事件写入 `<files>/traces/actions.jsonl`
-- **云端上传**: mock / llm 双模式，周期性上传最近 100 条事件
-- **RawEvent 对齐**: 每条 JSONL 事件的 `rawEvent` 字段使用和 `aios-spec::RawEvent` 一致的 JSON 格式
-- **CI**: GitHub Actions 自动构建 debug APK + 单元测试 + 产物上传
-
-<div v-click class="mt-4 p-3 border border-primary/20 rounded text-sm">
-
-**与 Rust daemon 的关系**: android-collector 是 **Phase-1 探针**，用于 Android 接口可行性验证。各数据源筛选通过后，对应的采集逻辑将提升到 `aios-adapter` 的 Rust daemon 中（如 NotificationListenerService → Kotlin↔Rust JNI 桥接）。当前二者为 **互补关系**：daemon 走内核层 (/proc, eBPF)，collector 走系统服务层 (NotificationListener, Accessibility)。
-
-</div>
-
-
----
-
-# What · Android Phase-1 采集探针 — `apps/android-collector`
+# What · 采集探针 — `apps/android-collector`
 
 **Kotlin Android 应用** — 在设备上直接采集行为信号，支持逐个数据源的接口筛选
 
@@ -324,9 +290,9 @@ pub enum SanitizedEventType {
 | 无障碍 | `AccessibilityService` | 窗口、点击、焦点、文本变化 |
 | 设备上下文 | 系统 API 查询 | 电量、网络、屏幕、铃声、DND |
 
----
+</div>
 
-# What · Android Phase-1 采集探针 — 关键特性
+<div>
 
 ### 关键特性
 
@@ -336,6 +302,10 @@ pub enum SanitizedEventType {
 - **RawEvent 对齐**: 每条 JSONL 事件的 `rawEvent` 字段使用和 `aios-spec::RawEvent` 一致的 JSON 格式
 - **CI**: GitHub Actions 自动构建 debug APK + 单元测试 + 产物上传
 
+</div>
+
+</div>
+
 <div v-click class="mt-4 p-3 border border-primary/20 rounded text-sm">
 
 **与 Rust daemon 的关系**: android-collector 是 **Phase-1 探针**，用于 Android 接口可行性验证。各数据源筛选通过后，对应的采集逻辑将提升到 `aios-adapter` 的 Rust daemon 中（如 NotificationListenerService → Kotlin↔Rust JNI 桥接）。当前二者为 **互补关系**：daemon 走内核层 (/proc, eBPF)，collector 走系统服务层 (NotificationListener, Accessibility)。
@@ -343,9 +313,6 @@ pub enum SanitizedEventType {
 </div>
 
 
----
-
-# 二、Why — 为什么要做 DiPECS
 
 <v-clicks>
 
@@ -393,12 +360,12 @@ pub enum SanitizedEventType {
 
 ### 机制-策略分离
 
-```mermaid {scale: 0.42}
+```mermaid {scale: 0.45}
 graph TD
-    subgraph Cloud["策略面"]
+    subgraph Cloud["☁️ 策略面"]
         LLM["LLM 推理"]
     end
-    subgraph Device["机制面"]
+    subgraph Device["📱 机制面"]
         direction LR
         Agent["Agent"] --> Core["Core"] --> Kernel["Kernel"] --> Adapter["Adapter"]
     end
@@ -439,81 +406,30 @@ fn sanitize(&self, raw: RawEvent) -> SanitizedEvent
 
 ---
 
-# 三、How — 系统全景架构 A
+# 三、How — 系统全景架构
 
-```mermaid {scale: 0.58}
-graph LR
-    L6["apps/android-collector<br/>采集探针 (Kotlin)"]
-    L5["aios-agent<br/>业务层"]
-    L4["aios-adapter<br/>适配层"]
-
-    L6 -.->|"JSONL + HTTP Upload<br/>(mock/llm)"| L5
-    L5 --> L4
-```
-
-<div class="mt-4 text-sm opacity-75">
-Android 系统服务层信号与 daemon 业务层汇合，再进入适配层。
-</div>
-
----
-
-# 三、How — 系统全景架构 B
-
-```mermaid {scale: 0.58}
-graph LR
-    L4["aios-adapter<br/>适配层"]
-    L3["aios-kernel<br/>内核层"]
-    L2["aios-core<br/>逻辑层"]
-    L1["aios-spec<br/>宪法层"]
-
-    L4 --> L3
-    L3 --> L2
-    L2 --> L1
-```
-
-<div class="mt-3 text-sm opacity-75">
-主线: 本地采集 → 本地脱敏 → 云端推理 → 本地校验 → 本地执行
-</div>
-
----
-
-# How · 系统全景架构 — 采集与调度层
-
-```mermaid {scale: 0.46}
+```mermaid {scale: 0.55}
 graph LR
     subgraph L6["apps/android-collector · 采集探针 (Kotlin)"]
         Collector["NotificationListener<br/>AccessibilityService<br/>UsageStatsManager"]
     end
 
     subgraph L5["aios-agent · 业务层"]
-        direction LR
         Main["dipecsd 守护进程"]
-        Cloud["MockCloudProxy<br/>后续替换 HTTPS"]
+        Cloud["MockCloudProxy → 后续替换 HTTPS"]
     end
 
     subgraph L4["aios-adapter · 适配层"]
-        direction LR
         Proc["ProcReader<br/>Linux /proc 轮询"]
         Binder["BinderProbe<br/>eBPF tracepoint"]
         SysCol["SystemCollector<br/>电池/网络/状态"]
     end
 
-    Collector -.->|"JSONL + HTTP Upload<br/>(mock/llm)"| Main
-    L5 --> L4
-```
-
----
-
-# How · 系统全景架构 — 核心与契约层
-
-```mermaid {scale: 0.44}
-graph LR
     subgraph L3["aios-kernel · 内核层"]
         Exec["DefaultActionExecutor<br/>PreWarm / Prefetch / KeepAlive / Release"]
     end
 
     subgraph L2["aios-core · 逻辑层"]
-        direction LR
         Bus["ActionBus<br/>tokio mpsc 事件总线"]
         Privacy["PrivacyAirGap<br/>PII 脱敏引擎"]
         Policy["PolicyEngine<br/>风险/置信度/黑名单校验"]
@@ -521,93 +437,40 @@ graph LR
     end
 
     subgraph L1["aios-spec · 宪法层"]
-        Types["RawEvent / SanitizedEvent<br/>IntentBatch / GoldenTrace"]
+        Types["RawEvent / SanitizedEvent / IntentBatch / GoldenTrace"]
     end
 
-    Exec --> Bus
-    Bus --> Privacy
-    Privacy --> Policy
-    Policy --> Window
-    Window --> Types
+    L4 --> L3 --> L2 --> L1
+    L5 --> L4
+    Collector -.->|"JSONL + HTTP Upload (mock/llm)"| L5
 ```
 
 ---
 
-# How · 系统全景架构 — 模块职责
+# How · 数据闭环
 
-<div class="grid grid-cols-2 gap-4 mt-4 text-sm">
-
-<div>
-
-### 采集与调度
-
-- `apps/android-collector`: Notification / Accessibility / UsageStats
-- `aios-agent`: `dipecsd` 主循环，负责云端调用与动作调度
-- `aios-adapter`: `/proc`、Binder、系统状态等本地信号采集
-
-</div>
-
-<div>
-
-### 安全与执行
-
-- `aios-core`: `PrivacyAirGap`、`WindowAggregator`、`PolicyEngine`
-- `aios-kernel`: `ActionExecutor` 执行预热、预取、保活、释放
-- `aios-spec`: `RawEvent`、`SanitizedEvent`、`IntentBatch` 等契约
-
-</div>
-
-</div>
-
-<div class="mt-5 p-3 border border-primary/20 rounded text-sm">
-
-主线: **本地采集 → 本地脱敏 → 云端推理 → 本地策略校验 → 本地执行**。
-
-</div>
-
----
-
-# How · 数据闭环 — 采集到脱敏
-
-```mermaid {scale: 0.66}
+```mermaid {scale: 0.6}
 sequenceDiagram
-    participant K as Kernel
-    participant C as Collector
-    participant A as Adapter
-    participant Core
+    participant Kernel as Android Kernel
+    participant Collector as android-collector (Kotlin)
+    participant Adapter as aios-adapter
+    participant Core as aios-core
+    participant Agent as aios-agent
+    participant Cloud as Cloud LLM
 
-    K->>A: Binder / proc / sysfs
-    A->>Core: RawEvent (mpsc)
-    C-->>Core: 系统服务信号
+    Kernel->>Adapter: Binder tx / /proc / sysfs
+    Adapter->>Core: RawEvent (mpsc channel)
+    Collector->>Agent: JSONL trace + HTTP Upload (mock/llm)
     Core->>Core: PrivacyAirGap.sanitize()
     Note over Core: RawEvent → SanitizedEvent<br/>原始字符串 drop
-    Core->>Core: WindowAggregator (10s)
-```
-
-<div class="mt-4 text-sm opacity-75">
-
-这一页只展示 **原始信号如何进入本地安全边界**。PII 在 `PrivacyAirGap` 内被消费，云端永远看不到原始字符串。
-
-</div>
-
----
-
-# How · 数据闭环 — 推理到执行
-
-```mermaid {scale: 0.68}
-sequenceDiagram
-    participant Core
-    participant G as Agent
-    participant L as Cloud LLM
-    participant K as Kernel
-
-    Core->>G: StructuredContext
-    G->>L: HTTPS POST
-    L->>G: IntentBatch
-    G->>Core: evaluate_batch()
+    Core->>Core: WindowAggregator (10s 窗口)
+    Core->>Agent: StructuredContext (仅脱敏数据)
+    Agent->>Cloud: HTTPS POST
+    Cloud->>Agent: IntentBatch (结构化决策)
+    Agent->>Core: PolicyEngine.evaluate_batch()
     Note over Core: 风险/置信度/黑名单校验
-    Core->>G: Actions
-    G->>K: execute()
+    Core->>Agent: 通过的 Action 列表
+    Agent->>Kernel: ActionExecutor.execute()
 ```
 
 ---
@@ -786,158 +649,58 @@ PolicyEngine 校验通过 → 送入 ActionExecutor (当前为骨架，记录微
 
 ---
 
-# How · 守护进程流水线 — daemon 采集
+# How · 守护进程流水线 — dipecsd
 
-```mermaid {scale: 0.68}
-graph TD
+```mermaid {scale: 0.58}
+graph LR
     subgraph T1["Task 1 · 采集"]
-        direction LR
         PR["ProcReader<br/>每 100ms"]
         BP["BinderProbe<br/>每 100ms"]
         SC["SystemCollector<br/>每 30s"]
     end
 
-    T1 -->|"raw_events_tx<br/>(mpsc channel)"| Q["raw_events_rx"]
-```
-
-<div class="mt-3 text-sm opacity-75">
-daemon 内部采集任务统一写入 `raw_events_tx`，主任务从 `raw_events_rx` 消费。
-</div>
-
----
-
-# How · 守护进程流水线 — Android 外部探针
-
-```mermaid {scale: 0.68}
-graph TD
     subgraph T0["外部 · Android Collector (Kotlin)"]
         AC["UsageStats / Notification / Accessibility<br/>JSONL + HTTP Upload"]
     end
 
-    AC -.->|"mock/llm HTTP"| H["agent upload endpoint"]
-```
-
-<div class="mt-3 text-sm opacity-75">
-daemon 内部采集任务统一写入 `raw_events_tx`，主任务从 `raw_events_rx` 消费。
-</div>
-
----
-
-# How · 守护进程流水线 — Android 外部探针
-
-```mermaid {scale: 0.68}
-graph TD
-    subgraph T0["外部 · Android Collector (Kotlin)"]
-        AC["UsageStats / Notification / Accessibility<br/>JSONL + HTTP Upload"]
+    subgraph T2["Task 2 · 处理 (主 task)"]
+        S["sanitize()"]
+        W["WindowAggregator<br/>10s 窗口"]
+        M["MockCloudProxy<br/>evaluate()"]
+        P["PolicyEngine<br/>evaluate_batch()"]
+        E["ActionExecutor<br/>execute_batch()"]
     end
 
-    AC -.->|"mock/llm HTTP"| H["agent upload endpoint"]
+    T1 -->|"raw_events_tx<br/>(mpsc channel)"| S
+    AC -.->|"mock/llm HTTP"| M
+    S --> W --> M --> P --> E
 ```
 
-<div class="mt-3 text-sm opacity-75">
-系统服务层探针走独立通道，便于 Phase-1 验证 Android 接口可用性。
-</div>
-
----
-
-# How · 守护进程流水线 — 采集组件说明
-
-<div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+<div v-click class="mt-3 text-sm grid grid-cols-2 gap-4">
 
 <div>
-
-### Rust daemon 采集任务
-
-| 组件 | 频率 | 输出 |
-|:---|:---|:---|
-| `ProcReader` | 100ms | 进程状态变化 |
-| `BinderProbe` | 100ms | Binder 调用信号 |
-| `SystemCollector` | 30s | 电量 / 网络 / 屏幕 |
-
-<div class="mt-3 p-2 border border-primary/20 rounded text-xs">
-统一写入 `raw_events_tx`，主任务从 `raw_events_rx` 消费。
-</div>
-
-</div>
-
-<div>
-
-### Android Phase-1 外部探针
-
-| 数据源 | 通道 |
-|:---|:---|
-| UsageStats | JSONL |
-| Notification | JSONL |
-| Accessibility | JSONL |
-| Upload Worker | HTTP mock/llm |
-
-<div class="mt-3 p-2 border border-primary/20 rounded text-xs">
-用于筛选 Android 系统服务接口，后续再并入 daemon。
-</div>
-
-</div>
-
-</div>
-
----
-
-# How · 守护进程流水线 — 主处理链路 A
-
-```mermaid {scale: 0.68}
-graph LR
-    Q["raw_events_rx"]
-    S["sanitize()<br/>RawEvent → SanitizedEvent"]
-    W["WindowAggregator<br/>10s 窗口"]
-    C["StructuredContext<br/>仅脱敏数据"]
-
-    Q --> S
-    S --> W
-    W --> C
-```
-
-<div class="mt-4 text-sm opacity-75">
-这一段只在本地执行：原始事件进入 `sanitize()`，随后聚合为 10s 窗口上下文。
-</div>
-
----
-
-# How · 守护进程流水线 — 主处理链路 B
-
-```mermaid {scale: 0.68}
-graph LR
-    C["StructuredContext<br/>仅脱敏数据"]
-    U["上传事件摘要"]
-    M["MockCloudProxy<br/>evaluate()"]
-    P["PolicyEngine<br/>evaluate_batch()"]
-    E["ActionExecutor<br/>execute_batch()"]
-
-    C --> M
-    U -.-> M
-    M --> P
-    P --> E
-```
-
----
-
-# How · 守护进程流水线 — 生命周期与边界
 
 **生命周期**:
 - fork + setsid (daemonize)
 - `--no-daemon` 模式用于开发调试
 - SIGTERM/SIGINT 通过 broadcast channel 优雅退出
 
----
+</div>
 
-# How · 守护进程流水线 — 关键设计
+<div>
 
 **关键设计**:
 - 核心处理是同步的 (aios-core 无 async)
 - 异步仅在 I/O 边界 (adapter 读取 / agent HTTPS)
 - 所有步骤通过 `tracing` 打点
 
+</div>
+
+</div>
+
 ---
 
-# How · MockCloudProxy — 信号到意图的映射 A
+# How · MockCloudProxy — 信号到意图的映射
 
 当前阶段使用基于规则的模拟代理，6 条规则覆盖全部动作类型:
 
@@ -946,13 +709,6 @@ graph LR
 | 通知含 FileMention | `OpenApp(source_app)` | PreWarmProcess | 0.70 |
 | ActivityLaunch 检测 | `SwitchToApp(target)` | PreWarmProcess + KeepAlive | 0.85 |
 | 文件活动 (任意) | `HandleFile(ext_category)` | PrefetchFile | 0.75 |
-
----
-
-# How · MockCloudProxy — 信号到意图的映射 B
-
-| 检测信号 | 生成意图 | 推荐动作 | 置信度 |
-|:---|:---|:---|:---|
 | 屏幕 Interactive | `Idle` | KeepAlive(foreground) | 0.60 |
 | 电量 < 20% | `Idle` | ReleaseMemory | 0.80 |
 | 空窗口 (兜底) | `Idle` | NoOp | 0.50 |
