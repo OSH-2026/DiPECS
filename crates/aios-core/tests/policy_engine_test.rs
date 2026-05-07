@@ -181,7 +181,7 @@ fn test_deferred_urgency_filtered() {
     // Deferred action 被过滤, 只剩 NoOp
     assert_eq!(decisions[0].approved_actions.len(), 1);
     assert!(matches!(
-        decisions[0].approved_actions[0].action_type,
+        decisions[0].approved_actions[0].action.action_type,
         ActionType::NoOp
     ));
 }
@@ -209,7 +209,7 @@ fn test_blocked_action_filtered() {
     assert!(decisions[0].approved);
     assert_eq!(decisions[0].approved_actions.len(), 1);
     assert!(matches!(
-        decisions[0].approved_actions[0].action_type,
+        decisions[0].approved_actions[0].action.action_type,
         ActionType::NoOp
     ));
 }
@@ -333,4 +333,130 @@ fn test_approved_intent_preserves_actions() {
 
     assert!(decisions[0].approved);
     assert_eq!(decisions[0].approved_actions.len(), 2);
+    assert_eq!(decisions[0].approved_actions[0].intent_id, "i1");
+    assert_eq!(decisions[0].approved_actions[0].authorized_at_ms, 5000);
+    assert!(matches!(
+        decisions[0].approved_actions[0].action.action_type,
+        ActionType::PreWarmProcess
+    ));
+}
+
+// ===== CapabilityLevel 检查 =====
+
+#[test]
+fn test_rule_based_backend_rejects_medium_risk() {
+    let engine = PolicyEngine::default();
+    let capability = CapabilityLevel::for_route(DecisionRoute::RuleBased);
+    let intent = make_intent(
+        "i1",
+        IntentType::Idle,
+        0.8,
+        RiskLevel::Medium,
+        vec![make_action(
+            ActionType::ReleaseMemory,
+            None,
+            ActionUrgency::Immediate,
+        )],
+    );
+    let batch = make_batch(vec![intent]);
+    let decisions = engine.evaluate_batch_with_capability(&batch, &capability);
+
+    assert_eq!(decisions.len(), 1);
+    assert!(
+        !decisions[0].approved,
+        "RuleBased backend should reject Medium risk"
+    );
+    assert!(decisions[0]
+        .rejection_reason
+        .as_deref()
+        .unwrap()
+        .contains("backend capability"));
+}
+
+#[test]
+fn test_fallback_noop_blocks_prewarm() {
+    let engine = PolicyEngine::default();
+    let capability = CapabilityLevel::for_route(DecisionRoute::FallbackNoOp);
+    let intent = make_intent(
+        "i1",
+        IntentType::Idle,
+        0.8,
+        RiskLevel::Low,
+        vec![
+            make_action(
+                ActionType::PreWarmProcess,
+                Some("com.a"),
+                ActionUrgency::Immediate,
+            ),
+            make_action(ActionType::NoOp, None, ActionUrgency::Immediate),
+        ],
+    );
+    let batch = make_batch(vec![intent]);
+    let decisions = engine.evaluate_batch_with_capability(&batch, &capability);
+
+    assert!(decisions[0].approved);
+    assert_eq!(decisions[0].approved_actions.len(), 1);
+    assert!(matches!(
+        decisions[0].approved_actions[0].action.action_type,
+        ActionType::NoOp
+    ));
+    assert_eq!(decisions[0].capability_denials.len(), 1);
+    assert!(decisions[0].capability_denials[0].contains("PreWarmProcess"));
+}
+
+#[test]
+fn test_cloud_llm_allows_medium_risk() {
+    let engine = PolicyEngine::default();
+    let capability = CapabilityLevel::for_route(DecisionRoute::CloudLlm);
+    let intent = make_intent(
+        "i1",
+        IntentType::OpenApp("com.a".into()),
+        0.8,
+        RiskLevel::Medium,
+        vec![make_action(
+            ActionType::PreWarmProcess,
+            Some("com.a"),
+            ActionUrgency::Immediate,
+        )],
+    );
+    let batch = make_batch(vec![intent]);
+    let decisions = engine.evaluate_batch_with_capability(&batch, &capability);
+
+    // CloudLlm allows Medium, but config default only allows Low
+    // So the config-level check should reject it
+    assert!(!decisions[0].approved);
+    assert!(decisions[0]
+        .rejection_reason
+        .as_deref()
+        .unwrap()
+        .contains("exceeds max allowed"));
+}
+
+#[test]
+fn test_cloud_llm_medium_risk_with_relaxed_config() {
+    let config = PolicyConfig {
+        max_auto_risk: RiskLevel::Medium,
+        ..PolicyConfig::default()
+    };
+    let engine = PolicyEngine::new(config);
+    let capability = CapabilityLevel::for_route(DecisionRoute::CloudLlm);
+    let intent = make_intent(
+        "i1",
+        IntentType::OpenApp("com.a".into()),
+        0.8,
+        RiskLevel::Medium,
+        vec![make_action(
+            ActionType::PreWarmProcess,
+            Some("com.a"),
+            ActionUrgency::Immediate,
+        )],
+    );
+    let batch = make_batch(vec![intent]);
+    let decisions = engine.evaluate_batch_with_capability(&batch, &capability);
+
+    assert!(
+        decisions[0].approved,
+        "CloudLlm + relaxed config should allow Medium risk"
+    );
+    assert_eq!(decisions[0].approved_actions.len(), 1);
 }

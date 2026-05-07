@@ -40,66 +40,41 @@ fn make_intent_batch() -> IntentBatch {
 }
 
 #[tokio::test]
-async fn test_push_raw_event_succeeds() {
-    let bus = ActionBus::new(4);
-    let event = make_raw_event();
-    let result = bus.push_raw_event(event).await;
-    assert!(result.is_ok());
-}
-
-#[tokio::test]
-async fn test_push_raw_event_received() {
+async fn test_send_raw_event_received() {
     let mut bus = ActionBus::new(4);
-    bus.push_raw_event(make_raw_event()).await.unwrap();
+    bus.raw_sender().send(make_raw_event()).await.unwrap();
 
-    let received = bus.raw_events_rx.try_recv();
-    assert!(received.is_ok());
+    let received = bus.recv_raw().await;
+    assert!(received.is_some());
 }
 
 #[tokio::test]
-async fn test_push_intent_succeeds() {
-    let bus = ActionBus::new(4);
-    let batch = make_intent_batch();
-    let result = bus.push_intent(batch).await;
-    assert!(result.is_ok());
-}
-
-#[tokio::test]
-async fn test_push_intent_received() {
+async fn test_send_intent_received() {
     let mut bus = ActionBus::new(4);
-    bus.push_intent(make_intent_batch()).await.unwrap();
+    bus.intent_sender().send(make_intent_batch()).await.unwrap();
 
-    let received = bus.intent_rx.try_recv();
-    assert!(received.is_ok());
-    let batch = received.unwrap();
+    let batch = bus.recv_intent().await.unwrap();
     assert_eq!(batch.model, "test");
     assert_eq!(batch.intents.len(), 1);
 }
 
 #[tokio::test]
-async fn test_channel_closed_after_rx_dropped() {
+async fn test_sender_closed_after_bus_dropped() {
     let bus = ActionBus::new(4);
-    let tx = bus.raw_events_tx;
-    drop(bus.raw_events_rx); // close rx, draining any buffered sends
+    let raw_tx = bus.raw_sender();
+    let intent_tx = bus.intent_sender();
+    drop(bus); // drops receivers → channel closes
 
-    let result = tx.send(make_raw_event()).await;
+    let result = raw_tx.send(make_raw_event()).await;
     assert!(result.is_err(), "send should fail after rx dropped");
-}
 
-#[tokio::test]
-async fn test_intent_channel_closed_after_rx_dropped() {
-    let bus = ActionBus::new(4);
-    let tx = bus.intent_tx;
-    drop(bus.intent_rx);
-
-    let result = tx.send(make_intent_batch()).await;
+    let result = intent_tx.send(make_intent_batch()).await;
     assert!(result.is_err());
 }
 
 #[test]
 fn test_action_bus_default_creates() {
     let bus = ActionBus::default();
-    // 验证 sender/receiver 可用
-    assert!(!bus.raw_events_tx.is_closed());
-    assert!(!bus.intent_tx.is_closed());
+    assert!(!bus.raw_sender().is_closed());
+    assert!(!bus.intent_sender().is_closed());
 }

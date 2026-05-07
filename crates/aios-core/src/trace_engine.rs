@@ -54,17 +54,12 @@ impl TraceValidator for DefaultTraceEngine {
     }
 }
 
-/// 比较两个 SanitizedEvent 是否一致
+/// 比较两个 SanitizedEvent 的语义内容是否一致。
 ///
-/// 注意: event_id 和 timestamp_ms 不在比较范围内,
-/// 因为它们可能因生成时间不同而变化。
-/// 只比较语义内容 (event_type, source_tier, app_package, uid)。
+/// event_id 和 timestamp_ms 不在比较范围内
+/// (它们可能因生成时间不同而变化)。
 fn sanitized_eq(a: &SanitizedEvent, b: &SanitizedEvent) -> bool {
-    // 序列化后比较是确定性的 (serde_json 保证 key 顺序)
-    // 但需要先排除 event_id
-    let a_json = serde_json::to_string(&a.event_type).unwrap_or_default();
-    let b_json = serde_json::to_string(&b.event_type).unwrap_or_default();
-    a_json == b_json
+    a.event_type == b.event_type
         && a.source_tier == b.source_tier
         && a.app_package == b.app_package
         && a.uid == b.uid

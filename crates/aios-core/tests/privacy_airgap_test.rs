@@ -171,3 +171,239 @@ fn test_prefixed_variable_warning_suppression() {
     let sanitizer = DefaultPrivacyAirGap;
     let _ = sanitizer; // 使用 _ 前缀抑制警告
 }
+
+// ===== PII 回归测试 =====
+
+#[test]
+fn test_chinese_names_not_leaked() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.tencent.mm".into(),
+        category: Some("msg".into()),
+        channel_id: None,
+        raw_title: "王小明".into(),
+        raw_text: "李华发来一条消息：明天开会".into(),
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification {
+            title_hint,
+            text_hint,
+            ..
+        } => {
+            // 元数据保留，原文不保留
+            assert!(title_hint.length_chars > 0);
+            assert_eq!(title_hint.script, ScriptHint::Hanzi);
+            assert!(text_hint.length_chars > 0);
+            assert_eq!(text_hint.script, ScriptHint::Hanzi);
+            // 原始姓名无法通过 SanitizedEvent 的任何字段访问
+        },
+        _ => panic!("expected Notification event"),
+    }
+}
+
+#[test]
+fn test_phone_numbers_not_leaked() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.android.dialer".into(),
+        category: Some("call".into()),
+        channel_id: None,
+        raw_title: "未接来电".into(),
+        raw_text: "13812345678 来电".into(),
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification { text_hint, .. } => {
+            // 14 个字符的原文长度保留，但原文内容不保留
+            assert_eq!(text_hint.length_chars, 14);
+            // 无 FileMention, ImageMention 等语义标记（纯电话号码）
+        },
+        _ => panic!("expected Notification event"),
+    }
+}
+
+#[test]
+fn test_file_path_stripped_only_category_survives() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::FileSystemAccess(FsAccessEvent {
+        timestamp_ms: 1000,
+        pid: 12345,
+        uid: 10123,
+        file_path: "/data/data/com.example/files/user_profile.db".into(),
+        access_type: FsAccessType::OpenRead,
+        bytes_transferred: Some(4096),
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::FileActivity {
+            extension_category, ..
+        } => {
+            // .db 映射到 Other
+            assert_eq!(*extension_category, ExtensionCategory::Other);
+            // 完整路径 /data/data/com.example/files/user_profile.db 已被丢弃
+        },
+        _ => panic!("expected FileActivity event"),
+    }
+}
+
+#[test]
+fn test_binder_payload_not_preserved() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::BinderTransaction(BinderTxEvent {
+        timestamp_ms: 1000,
+        source_pid: 12345,
+        source_uid: 10123,
+        target_service: "notification".into(),
+        target_method: "enqueueNotificationWithTag".into(),
+        is_oneway: true,
+        payload_size: 2048,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::InterAppInteraction { .. } => {
+            // payload_size 不出现于 SanitizedEvent 的任何字段 —
+            // 这是编译期保证（InterAppInteraction 变体无此字段）
+        },
+        _ => panic!("expected InterAppInteraction event"),
+    }
+    // Binder 事件通常无 app_package
+    assert!(sanitized.app_package.is_none());
+}
+
+#[test]
+fn test_emoji_only_notification_text() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.whatsapp".into(),
+        category: Some("msg".into()),
+        channel_id: None,
+        raw_title: "👍".into(),
+        raw_text: "😂🎉👍".into(),
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification {
+            title_hint,
+            text_hint,
+            ..
+        } => {
+            assert!(title_hint.is_emoji_only);
+            assert_eq!(title_hint.length_chars, 1);
+            assert!(text_hint.is_emoji_only);
+            assert_eq!(text_hint.length_chars, 3);
+            assert_eq!(text_hint.script, ScriptHint::Unknown);
+        },
+        _ => panic!("expected Notification event"),
+    }
+}
+
+#[test]
+fn test_mixed_chinese_english_notification_text() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.example.app".into(),
+        category: Some("msg".into()),
+        channel_id: None,
+        raw_title: "Hello 世界".into(),
+        raw_text: "你的order已发货 tracking#12345".into(),
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification {
+            title_hint,
+            text_hint,
+            ..
+        } => {
+            assert_eq!(title_hint.script, ScriptHint::Mixed);
+            assert_eq!(text_hint.script, ScriptHint::Mixed);
+            assert!(!title_hint.is_emoji_only);
+            assert!(!text_hint.is_emoji_only);
+        },
+        _ => panic!("expected Notification event"),
+    }
+}
+
+#[test]
+fn test_empty_notification_text() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.example.app".into(),
+        category: Some("msg".into()),
+        channel_id: None,
+        raw_title: "".into(),
+        raw_text: "".into(),
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification {
+            title_hint,
+            text_hint,
+            ..
+        } => {
+            assert_eq!(title_hint.length_chars, 0);
+            assert_eq!(title_hint.script, ScriptHint::Unknown);
+            assert!(!title_hint.is_emoji_only);
+            assert_eq!(text_hint.length_chars, 0);
+            assert_eq!(text_hint.script, ScriptHint::Unknown);
+            assert!(!text_hint.is_emoji_only);
+        },
+        _ => panic!("expected Notification event"),
+    }
+}
+
+#[test]
+fn test_very_long_notification_text_length_preserved_content_not_leaked() {
+    let sanitizer = DefaultPrivacyAirGap;
+    let long_text = "a".repeat(10000);
+    let expected_len = long_text.chars().count();
+    let raw = RawEvent::NotificationPosted(NotificationRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.example.app".into(),
+        category: Some("msg".into()),
+        channel_id: None,
+        raw_title: "Long message".into(),
+        raw_text: long_text,
+        is_ongoing: false,
+        group_key: None,
+        has_picture: false,
+    });
+    let sanitized = sanitizer.sanitize(raw);
+
+    match &sanitized.event_type {
+        SanitizedEventType::Notification { text_hint, .. } => {
+            assert_eq!(text_hint.length_chars, expected_len);
+            assert_eq!(text_hint.script, ScriptHint::Latin);
+            assert!(!text_hint.is_emoji_only);
+            // 10000 个 'a' — 原文内容不可访问，仅长度元数据保留
+        },
+        _ => panic!("expected Notification event"),
+    }
+}

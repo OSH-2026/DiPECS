@@ -6,7 +6,7 @@
 //! 3. 检查目标 app 是否可操作
 //! 4. 输出经过滤的可执行动作列表
 
-use aios_spec::{ActionUrgency, Intent, IntentBatch, RiskLevel, SuggestedAction};
+use aios_spec::{ActionUrgency, AuthorizedAction, CapabilityLevel, Intent, IntentBatch, RiskLevel};
 
 /// 策略校验结果
 #[derive(Debug, Clone)]
@@ -17,8 +17,10 @@ pub struct PolicyDecision {
     pub approved: bool,
     /// 被拒绝的原因 (如有)
     pub rejection_reason: Option<String>,
+    /// 因超出后端能力而被拦截的动作 (如有)
+    pub capability_denials: Vec<String>,
     /// 通过校验的动作列表 (可能少于原始列表)
-    pub approved_actions: Vec<SuggestedAction>,
+    pub approved_actions: Vec<AuthorizedAction>,
 }
 
 /// 策略引擎配置
@@ -56,18 +58,59 @@ impl PolicyEngine {
         Self { config }
     }
 
-    /// 校验整个 IntentBatch, 返回每个意图的决策
+    /// 校验整个 IntentBatch, 返回每个意图的决策。
+    ///
+    /// 不检查后端能力等级——用于未指定后端的场景或向后兼容。
     pub fn evaluate_batch(&self, batch: &IntentBatch) -> Vec<PolicyDecision> {
         batch
             .intents
             .iter()
-            .map(|intent| self.evaluate_intent(intent))
+            .map(|intent| self.evaluate_intent(intent, batch.generated_at_ms, None))
+            .collect()
+    }
+
+    /// 校验整个 IntentBatch，同时执行后端能力等级检查。
+    ///
+    /// 超出后端 `CapabilityLevel` 的意图会被拒绝，
+    /// 超出允许列表的动作会被拦截并记录在 `capability_denials` 中。
+    pub fn evaluate_batch_with_capability(
+        &self,
+        batch: &IntentBatch,
+        capability: &CapabilityLevel,
+    ) -> Vec<PolicyDecision> {
+        batch
+            .intents
+            .iter()
+            .map(|intent| self.evaluate_intent(intent, batch.generated_at_ms, Some(capability)))
             .collect()
     }
 
     /// 校验单个意图
-    fn evaluate_intent(&self, intent: &Intent) -> PolicyDecision {
-        // 1. 风险等级检查
+    fn evaluate_intent(
+        &self,
+        intent: &Intent,
+        authorized_at_ms: i64,
+        capability: Option<&CapabilityLevel>,
+    ) -> PolicyDecision {
+        let mut capability_denials: Vec<String> = Vec::new();
+
+        // 1. 后端能力等级检查 (先于通用策略，确保越权意图被明确拒绝)
+        if let Some(cap) = capability {
+            if !cap.allows_risk(intent.risk_level) {
+                return PolicyDecision {
+                    intent_id: intent.intent_id.clone(),
+                    approved: false,
+                    rejection_reason: Some(format!(
+                        "risk level {:?} exceeds backend capability max ({:?})",
+                        intent.risk_level, cap.max_risk
+                    )),
+                    capability_denials: vec![],
+                    approved_actions: vec![],
+                };
+            }
+        }
+
+        // 2. 通用风险等级检查
         if intent.risk_level as u8 > self.config.max_auto_risk as u8 {
             return PolicyDecision {
                 intent_id: intent.intent_id.clone(),
@@ -76,22 +119,24 @@ impl PolicyEngine {
                     "risk level {:?} exceeds max allowed {:?}",
                     intent.risk_level, self.config.max_auto_risk
                 )),
+                capability_denials: vec![],
                 approved_actions: vec![],
             };
         }
 
-        // 2. 置信度检查 — 低于 0.3 的意图直接拒绝
+        // 3. 置信度检查 — 低于 0.3 的意图直接拒绝
         if intent.confidence < 0.3 {
             return PolicyDecision {
                 intent_id: intent.intent_id.clone(),
                 approved: false,
                 rejection_reason: Some(format!("confidence {} too low", intent.confidence)),
+                capability_denials: vec![],
                 approved_actions: vec![],
             };
         }
 
-        // 3. 过滤动作
-        let approved_actions: Vec<SuggestedAction> = intent
+        // 4. 过滤动作
+        let approved_actions: Vec<AuthorizedAction> = intent
             .suggested_actions
             .iter()
             .filter(|action| {
@@ -109,16 +154,32 @@ impl PolicyEngine {
                 if matches!(action.urgency, ActionUrgency::Deferred) {
                     return false;
                 }
+                // 检查后端能力白名单
+                if let Some(cap) = capability {
+                    if !cap.allows_action(&action.action_type) {
+                        capability_denials.push(format!(
+                            "action {:?} not allowed by backend capability",
+                            action.action_type
+                        ));
+                        return false;
+                    }
+                }
                 true
             })
             .take(self.config.max_actions_per_batch)
             .cloned()
+            .map(|action| AuthorizedAction {
+                intent_id: intent.intent_id.clone(),
+                action,
+                authorized_at_ms,
+            })
             .collect();
 
         PolicyDecision {
             intent_id: intent.intent_id.clone(),
             approved: true,
             rejection_reason: None,
+            capability_denials,
             approved_actions,
         }
     }
