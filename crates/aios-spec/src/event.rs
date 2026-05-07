@@ -6,14 +6,14 @@
 use serde::{Deserialize, Serialize};
 
 // ============================================================
-// RawEvent — 原始事件 (含 PII, 仅存在于 adapter-core 边界内)
+// RawEvent — 原始事件 (含 PII, 仅存在于 collector-core 边界内)
 // ============================================================
 
 /// 从系统采集的原始事件, 未经脱敏。
 ///
-/// 此类型仅存在于 aios-adapter → aios-core 的传输路径上,
+/// 此类型仅存在于 aios-collector → aios-core 的传输路径上,
 /// 经由 `PrivacySanitizer` 处理后再也不包含原始敏感数据。
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RawEvent {
     /// 应用前后台切换 (UsageStatsManager)
     AppTransition(AppTransitionRawEvent),
@@ -33,9 +33,24 @@ pub enum RawEvent {
     SystemState(SystemStateEvent),
 }
 
+/// apps / collector interface 到 Rust 入口的事件信封。
+///
+/// envelope 只描述来源、版本和传输元信息；真正进入脱敏管线的事件
+/// 仍然是 `raw_event` 中的 `RawEvent`。
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CollectorEnvelope {
+    pub schema_version: String,
+    pub source: String,
+    pub source_tier: SourceTier,
+    pub device_trace_id: Option<String>,
+    pub captured_at_ms: i64,
+    pub received_at_ms: Option<i64>,
+    pub raw_event: RawEvent,
+}
+
 // ===== RawEvent 子类型 =====
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AppTransitionRawEvent {
     pub timestamp_ms: i64,
     pub package_name: String,
@@ -49,7 +64,7 @@ pub enum AppTransition {
     Background,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BinderTxEvent {
     pub timestamp_ms: i64,
     pub source_pid: u32,
@@ -63,7 +78,7 @@ pub struct BinderTxEvent {
     pub payload_size: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProcStateEvent {
     pub timestamp_ms: i64,
     pub pid: u32,
@@ -87,7 +102,7 @@ pub enum ProcState {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FsAccessEvent {
     pub timestamp_ms: i64,
     pub pid: u32,
@@ -98,7 +113,7 @@ pub struct FsAccessEvent {
     pub bytes_transferred: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FsAccessType {
     OpenRead,
     OpenWrite,
@@ -107,7 +122,7 @@ pub enum FsAccessType {
 }
 
 /// 通知原始事件 — ⚠️ 含 PII (标题和正文)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NotificationRawEvent {
     pub timestamp_ms: i64,
     pub package_name: String,
@@ -122,7 +137,7 @@ pub struct NotificationRawEvent {
     pub has_picture: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NotificationInteractionRawEvent {
     pub timestamp_ms: i64,
     pub package_name: String,
@@ -130,7 +145,7 @@ pub struct NotificationInteractionRawEvent {
     pub action: NotificationAction,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NotificationAction {
     Tapped,
     Dismissed,
@@ -138,13 +153,13 @@ pub enum NotificationAction {
     Seen,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScreenStateEvent {
     pub timestamp_ms: i64,
     pub state: ScreenState,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SystemStateEvent {
     pub timestamp_ms: i64,
     pub battery_pct: Option<u8>,
@@ -157,75 +172,6 @@ pub struct SystemStateEvent {
 }
 
 // ============================================================
-// SanitizedEvent — 脱敏后事件 (不含 PII, 可在系统内自由传输)
-// ============================================================
-
-/// 脱敏后的事件。不再包含任何 PII。
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SanitizedEvent {
-    pub event_id: String,
-    pub timestamp_ms: i64,
-    pub event_type: SanitizedEventType,
-    pub source_tier: SourceTier,
-    pub app_package: Option<String>,
-    pub uid: Option<u32>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SanitizedEventType {
-    /// 应用前后台切换 (来自 UsageStatsManager)
-    AppTransition {
-        package_name: String,
-        activity_class: Option<String>,
-        transition: AppTransition,
-    },
-    /// 应用间交互 (从 Binder 事务推断)
-    InterAppInteraction {
-        source_package: Option<String>,
-        target_service: String,
-        interaction_type: InteractionType,
-    },
-    /// 通知 (脱敏后)
-    Notification {
-        source_package: String,
-        category: Option<String>,
-        channel_id: Option<String>,
-        title_hint: TextHint,
-        text_hint: TextHint,
-        semantic_hints: Vec<SemanticHint>,
-        is_ongoing: bool,
-        group_key: Option<String>,
-    },
-    /// 进程资源状态
-    ProcessResource {
-        pid: u32,
-        package_name: Option<String>,
-        vm_rss_mb: u32,
-        vm_swap_mb: u32,
-        thread_count: u32,
-        oom_score: i32,
-    },
-    /// 文件系统活动
-    FileActivity {
-        package_name: Option<String>,
-        extension_category: ExtensionCategory,
-        activity_type: FsActivityType,
-        is_hot_file: bool,
-    },
-    /// 屏幕状态
-    Screen { state: ScreenState },
-    /// 系统状态快照
-    SystemStatus {
-        battery_pct: Option<u8>,
-        is_charging: bool,
-        network: NetworkType,
-        ringer_mode: RingerMode,
-        location_type: LocationType,
-        headphone_connected: bool,
-    },
-}
-
-// ============================================================
 // 辅助枚举 — 跨类型共用
 // ============================================================
 
@@ -233,9 +179,11 @@ pub enum SanitizedEventType {
 pub enum SourceTier {
     PublicApi = 0,
     Daemon = 1,
+    PrivilegedDaemon = 2,
+    SystemImage = 3,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum InteractionType {
     NotifyPost,
     ActivityLaunch,
@@ -243,7 +191,7 @@ pub enum InteractionType {
     ServiceBind,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TextHint {
     pub length_chars: usize,
     pub script: ScriptHint,
@@ -260,7 +208,7 @@ pub enum ScriptHint {
     Unknown,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SemanticHint {
     FileMention,
     ImageMention,
@@ -284,7 +232,7 @@ pub enum ExtensionCategory {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FsActivityType {
     Read,
     Write,
@@ -292,7 +240,7 @@ pub enum FsActivityType {
     Delete,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ScreenState {
     Interactive,
     NonInteractive,
@@ -300,7 +248,7 @@ pub enum ScreenState {
     KeyguardHidden,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NetworkType {
     Wifi,
     Cellular,
@@ -308,14 +256,14 @@ pub enum NetworkType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RingerMode {
     Normal,
     Vibrate,
     Silent,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum LocationType {
     Home,
     Work,

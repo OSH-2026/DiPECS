@@ -1,4 +1,5 @@
-use crate::event::{RawEvent, SanitizedEvent};
+use crate::event::RawEvent;
+use crate::sanitized::SanitizedEvent;
 
 /// 隐私脱敏引擎
 ///

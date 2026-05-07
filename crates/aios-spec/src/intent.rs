@@ -19,6 +19,26 @@ pub struct IntentBatch {
     pub model: String,
 }
 
+/// 推理路由选择。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DecisionRoute {
+    RuleBased,
+    LocalEvaluator,
+    CloudLlm,
+    FallbackNoOp,
+    Mock,
+}
+
+/// 单个推理后端的统一输出。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DecisionBackendResult {
+    pub route: DecisionRoute,
+    pub intent_batch: IntentBatch,
+    pub rationale_tags: Vec<String>,
+    pub latency_us: u64,
+    pub error: Option<String>,
+}
+
 /// 单条意图
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Intent {
@@ -74,8 +94,16 @@ pub struct SuggestedAction {
     pub urgency: ActionUrgency,
 }
 
-/// 动作类型
+/// 已经由 `PolicyEngine` 审查通过、允许交给 executor 的动作。
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizedAction {
+    pub intent_id: String,
+    pub action: SuggestedAction,
+    pub authorized_at_ms: i64,
+}
+
+/// 动作类型
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionType {
     /// 预热应用进程
     PreWarmProcess,
@@ -98,4 +126,58 @@ pub enum ActionUrgency {
     IdleTime,
     /// 延迟执行
     Deferred,
+}
+
+// ============================================================
+// CapabilityLevel — 后端能力上限
+// ============================================================
+
+/// 推理后端的能力上限。
+///
+/// 每个 `DecisionRoute` 变体绑定一个 `CapabilityLevel`，
+/// 声明该后端能产出的最大风险等级和允许的动作类型。
+/// `PolicyEngine` 在审查时据此拒绝越权意图。
+#[derive(Debug, Clone)]
+pub struct CapabilityLevel {
+    pub max_risk: RiskLevel,
+    pub allowed_actions: Vec<ActionType>,
+}
+
+impl CapabilityLevel {
+    /// 根据路由选择返回对应的能力等级。
+    pub fn for_route(route: DecisionRoute) -> Self {
+        use ActionType::*;
+        match route {
+            DecisionRoute::RuleBased => Self {
+                max_risk: RiskLevel::Low,
+                allowed_actions: vec![NoOp, ReleaseMemory, KeepAlive],
+            },
+            DecisionRoute::LocalEvaluator => Self {
+                max_risk: RiskLevel::Low,
+                allowed_actions: vec![NoOp, PreWarmProcess, PrefetchFile, ReleaseMemory, KeepAlive],
+            },
+            DecisionRoute::CloudLlm => Self {
+                max_risk: RiskLevel::Medium,
+                allowed_actions: vec![NoOp, PreWarmProcess, PrefetchFile, KeepAlive, ReleaseMemory],
+            },
+            DecisionRoute::FallbackNoOp => Self {
+                max_risk: RiskLevel::Low,
+                allowed_actions: vec![NoOp],
+            },
+            DecisionRoute::Mock => Self {
+                max_risk: RiskLevel::Medium,
+                allowed_actions: vec![NoOp, PreWarmProcess, PrefetchFile, KeepAlive, ReleaseMemory],
+            },
+        }
+    }
+
+    /// 检查给定意图的风险等级是否在后端能力范围内。
+    pub fn allows_risk(&self, risk: RiskLevel) -> bool {
+        risk as u8 <= self.max_risk as u8
+    }
+
+    /// 检查给定动作类型是否在后端允许的白名单内。
+    pub fn allows_action(&self, action: &ActionType) -> bool {
+        self.allowed_actions.contains(action)
+    }
 }

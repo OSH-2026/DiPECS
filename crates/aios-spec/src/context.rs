@@ -7,9 +7,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::event::{
-    ExtensionCategory, LocationType, NetworkType, RingerMode, SanitizedEvent, SemanticHint,
-    SourceTier,
+    ExtensionCategory, LocationType, NetworkType, RingerMode, SemanticHint, SourceTier,
 };
+use crate::sanitized::SanitizedEvent;
 
 /// 时间窗口内的脱敏上下文
 ///

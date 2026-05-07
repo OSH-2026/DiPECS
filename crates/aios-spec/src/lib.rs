@@ -8,11 +8,13 @@
 mod context;
 mod event;
 mod intent;
+mod sanitized;
 mod trace;
 
 pub use context::*;
 pub use event::*;
 pub use intent::*;
+pub use sanitized::*;
 pub use trace::*;
 
 /// aios-spec 定义的公共 trait
