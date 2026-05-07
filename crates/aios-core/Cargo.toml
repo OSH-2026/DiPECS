@@ -10,5 +10,4 @@ repository.workspace = true
 aios-spec = { workspace = true }
 tokio = { workspace = true, features = ["sync", "macros"] }
 thiserror = { workspace = true }
-serde_json = { workspace = true }
 uuid = { workspace = true }
