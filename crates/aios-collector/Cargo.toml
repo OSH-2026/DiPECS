@@ -1,5 +1,5 @@
 [package]
-name = "aios-adapter"
+name = "aios-collector"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -9,10 +9,8 @@ repository.workspace = true
 [dependencies]
 aios-spec = { workspace = true }
 # aios-core = { workspace = true }
-# aios-kernel = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
+# aios-action = { workspace = true }
 tracing = { workspace = true }
 # tracing-subscriber = { workspace = true }
-libc = { workspace = true }
 # anyhow = { workspace = true }
 thiserror = { workspace = true }

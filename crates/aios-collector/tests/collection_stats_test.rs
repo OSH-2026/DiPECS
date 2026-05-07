@@ -1,4 +1,4 @@
-use aios_adapter::collection_stats::{RawEventKind, RawEventStats};
+use aios_collector::collection_stats::{RawEventKind, RawEventStats};
 use aios_spec::{AppTransition, AppTransitionRawEvent, NotificationRawEvent, RawEvent};
 
 #[test]

@@ -1,5 +1,5 @@
 [package]
-name = "aios-kernel"
+name = "aios-action"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

@@ -1,14 +1,18 @@
 //! 验证 DefaultActionExecutor 的动作执行逻辑
 
-use aios_kernel::DefaultActionExecutor;
+use aios_action::DefaultActionExecutor;
 use aios_spec::traits::ActionExecutor;
-use aios_spec::{ActionType, ActionUrgency, SuggestedAction};
+use aios_spec::{ActionType, ActionUrgency, AuthorizedAction, SuggestedAction};
 
-fn make_action(action_type: ActionType, target: Option<&str>) -> SuggestedAction {
-    SuggestedAction {
-        action_type,
-        target: target.map(|s| s.to_string()),
-        urgency: ActionUrgency::Immediate,
+fn make_action(action_type: ActionType, target: Option<&str>) -> AuthorizedAction {
+    AuthorizedAction {
+        intent_id: "intent-test".into(),
+        action: SuggestedAction {
+            action_type,
+            target: target.map(|s| s.to_string()),
+            urgency: ActionUrgency::Immediate,
+        },
+        authorized_at_ms: 1000,
     }
 }
 

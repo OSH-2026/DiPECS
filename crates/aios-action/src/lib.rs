@@ -1,4 +1,4 @@
-//! # aios-kernel — 资源生命周期管理与 IPC 协调
+//! # aios-action — 授权动作执行层
 //!
 //! 职责: 接收 PolicyEngine 校验通过的动作, 执行系统级操作。
 //!
@@ -8,12 +8,12 @@
 use aios_spec::traits::ActionExecutor;
 use aios_spec::traits::ActionResult;
 use aios_spec::ActionType;
-use aios_spec::SuggestedAction;
+use aios_spec::AuthorizedAction;
 use std::time::Instant;
 
 /// 默认动作执行器
 ///
-/// 执行经 PolicyEngine 校验后的 SuggestedAction。
+/// 执行经 PolicyEngine 校验后的 AuthorizedAction。
 /// 当前为骨架实现: 记录操作日志, 返回占位结果。
 /// 后续将对接真实 syscall:
 /// - PreWarmProcess → fork zygote, 调整 cgroup
@@ -23,8 +23,9 @@ use std::time::Instant;
 pub struct DefaultActionExecutor;
 
 impl ActionExecutor for DefaultActionExecutor {
-    fn execute(&self, action: &SuggestedAction) -> ActionResult {
+    fn execute(&self, authorized: &AuthorizedAction) -> ActionResult {
         let start = Instant::now();
+        let action = &authorized.action;
         let action_name = format!("{:?}", action.action_type);
 
         let (success, error) = match action.action_type {

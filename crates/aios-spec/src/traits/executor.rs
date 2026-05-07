@@ -1,15 +1,15 @@
-use crate::intent::SuggestedAction;
+use crate::intent::AuthorizedAction;
 
 /// 动作执行器
 ///
-/// 接收经 PolicyEngine 校验后的 SuggestedAction,
+/// 接收经 PolicyEngine 校验后的 AuthorizedAction,
 /// 执行真正的系统级操作 (调整 oom_score_adj, posix_fadvise 等)。
 pub trait ActionExecutor {
     /// 执行单个动作
-    fn execute(&self, action: &SuggestedAction) -> ActionResult;
+    fn execute(&self, action: &AuthorizedAction) -> ActionResult;
 
     /// 批量执行
-    fn execute_batch(&self, actions: &[SuggestedAction]) -> Vec<ActionResult> {
+    fn execute_batch(&self, actions: &[AuthorizedAction]) -> Vec<ActionResult> {
         actions.iter().map(|a| self.execute(a)).collect()
     }
 }

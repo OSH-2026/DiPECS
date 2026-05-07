@@ -12,13 +12,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "aios-adapter"
+name = "aios-action"
 version = "0.1.0"
 dependencies = [
  "aios-spec",
- "libc",
- "thiserror",
- "tokio",
  "tracing",
 ]
 
@@ -26,20 +23,23 @@ dependencies = [
 name = "aios-agent"
 version = "0.1.0"
 dependencies = [
- "aios-adapter",
- "aios-core",
- "aios-kernel",
  "aios-spec",
- "anyhow",
- "tokio",
  "tracing",
- "tracing-subscriber",
  "uuid",
 ]
 
 [[package]]
 name = "aios-cli"
 version = "0.1.0"
+
+[[package]]
+name = "aios-collector"
+version = "0.1.0"
+dependencies = [
+ "aios-spec",
+ "thiserror",
+ "tracing",
+]
 
 [[package]]
 name = "aios-core"
@@ -53,11 +53,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "aios-kernel"
+name = "aios-daemon"
 version = "0.1.0"
 dependencies = [
+ "aios-action",
+ "aios-agent",
+ "aios-collector",
+ "aios-core",
  "aios-spec",
+ "anyhow",
+ "libc",
+ "tokio",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
