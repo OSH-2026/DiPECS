@@ -38,3 +38,7 @@
   - [第 8 次 · 05-06](team/meetings/meeting-08-2026-05-06.md)
 - [CI 质检体系](team/ci.md)
 - [开发指南](team/dev.md)
+- [编码规范](team/conventions/index.md)
+  - [Rust](team/conventions/rust.md)
+  - [Kotlin](team/conventions/kotlin.md)
+  - [Shell](team/conventions/shell.md)
