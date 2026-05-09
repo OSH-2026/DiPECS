@@ -37,6 +37,7 @@
   - [第 7 次 · 04-19](team/meetings/meeting-07-2026-04-19.md)
   - [第 8 次 · 05-06](team/meetings/meeting-08-2026-05-06.md)
 - [CI 质检体系](team/ci.md)
+- [环境配置](team/environment.md)
 - [开发指南](team/dev.md)
 - [编码规范](team/conventions/index.md)
   - [Rust](team/conventions/rust.md)

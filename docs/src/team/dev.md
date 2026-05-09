@@ -2,8 +2,16 @@
 
 ## 环境准备
 
-- Rust 1.95.0+
-- Android Studio + NDK (API 33+)
+详见 [环境配置指南](environment.md)。
+
+必装：
+
+- Rust 1.95.0（`rust-toolchain.toml` 锁定）
+- 系统构建依赖（build-essential、lld 等）
+
+按需：
+
+- Android NDK r27d（交叉编译）
 - mdBook（文档构建）
 
 ## 项目结构
