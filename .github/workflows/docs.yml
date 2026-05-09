@@ -79,16 +79,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra latexmk
+
       - name: Build Academic Reports
-        uses: xu-cheng/latex-action@v3
-        with:
-          root_file: |
-            01_Survey_Report/main.tex
-            02_Feasibility_Report/main.tex
-            03_Midterm_Report/main.tex
-            04_Final_Report/main.tex
-          args: -pdf -interaction=nonstopmode -shell-escape
-          working_directory: docs/academic-src/
+        working-directory: docs/academic-src
+        run: |
+          for tex in \
+            01_Survey_Report/main.tex \
+            02_Feasibility_Report/main.tex \
+            03_Midterm_Report/main.tex \
+            04_Final_Report/main.tex; do
+            echo "=== Building $tex ==="
+            latexmk -pdf -interaction=nonstopmode -shell-escape "$tex"
+          done
 
       - name: Prepare PDF Artifacts
         run: |
