@@ -128,11 +128,11 @@ if [ "$CHECK_MARKDOWN" -eq 1 ]; then
             fi
         done <<< "$MD_FILES"
         
-        # 如果安装了 mdbook，则验证 SUMMARY.md 链接有效性
-        if command -v mdbook &> /dev/null && [ -f "docs/book.toml" ]; then
-            echo "执行 mdbook build 验证文档一致性..."
-            if ! mdbook build docs > /dev/null 2>&1; then
-                echo -e "${RED}错误: mdbook 构建失败，请检查 docs/SUMMARY.md 链接${NC}"
+        # 如果安装了 mkdocs，则验证文档链接有效性
+        if command -v mkdocs &> /dev/null && [ -f "docs/mkdocs.yml" ]; then
+            echo "执行 mkdocs build 验证文档一致性..."
+            if ! mkdocs build -f docs/mkdocs.yml > /dev/null 2>&1; then
+                echo -e "${RED}错误: mkdocs 构建失败，请检查文档链接${NC}"
                 exit 1
             fi
         fi

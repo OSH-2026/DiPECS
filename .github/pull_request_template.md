@@ -22,7 +22,7 @@ Fixes: (# )
 <!-- 说明你做了哪些测试来确保代码质量 -->
 - [ ] `cargo check` 通过
 - [ ] `cargo test` 通过 (如果涉及核心逻辑)
-- [ ] `mdbook build` 通过 (如果涉及文档)
+- [ ] `mkdocs build` 通过 (如果涉及文档)
 
 ## 📷 截图/附件 (Screenshots - Optional)
 <!-- 如果是 UI 变更或文档预览，请粘贴截图 -->

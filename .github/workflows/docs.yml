@@ -27,7 +27,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # 1. 编译 mdBook 与 Rust API 文档
+  # 1. 编译 MkDocs 与 Rust API 文档
   build-docs:
     name: Build KB & API
     runs-on: ubuntu-latest
@@ -39,27 +39,27 @@ jobs:
         with:
           toolchain: 1.95.0
 
-      - name: Install Documentation Tools
-        uses: taiki-e/install-action@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          tool: mdbook,mdbook-graphviz,cargo-deps
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install System Dependencies (Graphviz, lld)
         run: sudo apt-get update && sudo apt-get install -y graphviz lld
 
       - name: Verify Tools
         run: |
-          mdbook --version
+          uv --version
           dot -V
 
-      - name: Generate Dependency Graph
+      - name: Build MkDocs
         run: |
-          mkdir -p docs/src/img
-          cargo deps --all-deps | dot -Tpng > docs/src/img/deps.png || echo "Deps graph failed"
-
-      - name: Build mdBook
-        run: |
-          mdbook build docs
+          cd docs
+          uv sync --frozen
+          uv run env PYTHONPATH=. mkdocs build
 
       - name: Build API Docs
         run: cargo doc --no-deps --workspace --config 'target.x86_64-unknown-linux-gnu.rustdocflags = ["--extend-css", "rustdoc-custom.css"]'
@@ -69,52 +69,36 @@ jobs:
         with:
           name: docs-html
           path: |
-            docs/book/
+            docs/site/
             target/doc/
 
-  # 2. 编译学术报告 (仅在相关文件变动时触发)
+  # 2. 编译学术报告
   build-academic:
     name: Build Academic Reports
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - name: Check for Academic Changes
-        id: check_changes
-        run: |
-          if git diff --name-only HEAD^ HEAD 2>/dev/null | grep -q "^docs/academic/"; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            git diff --name-only origin/${{ github.base_ref }}..HEAD | grep -q "^docs/academic/" && echo "changed=true" >> $GITHUB_OUTPUT || echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Setup TeX Live
-        if: steps.check_changes.outputs.changed == 'true'
+      - name: Build Academic Reports
         uses: xu-cheng/latex-action@v3
         with:
           root_file: |
-            docs/academic/01_Survey_Report/main.tex
-            docs/academic/02_Feasibility_Report/main.tex
-            docs/academic/03_Midterm_Report/main.tex
-            docs/academic/04_Final_Report/main.tex
+            01_Survey_Report/main.tex
+            02_Feasibility_Report/main.tex
+            03_Midterm_Report/main.tex
+            04_Final_Report/main.tex
           args: -pdf -interaction=nonstopmode -shell-escape
-          working_directory: docs/academic/
+          working_directory: docs/academic-src/
 
       - name: Prepare PDF Artifacts
-        if: steps.check_changes.outputs.changed == 'true'
         run: |
           mkdir -p academic-pdfs
-          cp docs/academic/01_Survey_Report/main.pdf academic-pdfs/Survey_Report.pdf || true
-          cp docs/academic/02_Feasibility_Report/main.pdf academic-pdfs/Feasibility_Report.pdf || true
-          cp docs/academic/03_Midterm_Report/main.pdf academic-pdfs/Midterm_Report.pdf || true
-          cp docs/academic/04_Final_Report/main.pdf academic-pdfs/Final_Report.pdf || true
+          cp docs/academic-src/01_Survey_Report/main.pdf academic-pdfs/Survey_Report.pdf
+          cp docs/academic-src/02_Feasibility_Report/main.pdf academic-pdfs/Feasibility_Report.pdf
+          cp docs/academic-src/03_Midterm_Report/main.pdf academic-pdfs/Midterm_Report.pdf
+          cp docs/academic-src/04_Final_Report/main.pdf academic-pdfs/Final_Report.pdf
 
       - name: Upload Academic Artifacts
-        if: steps.check_changes.outputs.changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academic-pdfs
@@ -135,62 +119,61 @@ jobs:
           name: docs-html
           path: site-temp
 
-      - name: Download Academic Artifacts (Optional)
+      - name: Download Academic Artifacts
         uses: actions/download-artifact@v4
         with:
           name: academic-pdfs
           path: academic-temp
-        continue-on-error: true
 
       - name: Organize Structure
         run: |
           PUB="public_html"
-          mkdir -p "$PUB/guide" "$PUB/api" "$PUB/academic"
+          mkdir -p "$PUB/api" "$PUB/academic/reports"
 
-          # 移动 mdBook
-          cp -r site-temp/docs/book/* "$PUB/guide/"
+          # MkDocs 输出成为站点根
+          cp -r site-temp/docs/site/* "$PUB/"
 
           # 移动 API Docs
           cp -r site-temp/target/doc/* "$PUB/api/"
 
-          # 移动 Slides 演示文稿
-          mkdir -p "$PUB/slides"
-          cp -r docs/slides/* "$PUB/slides/" 2>/dev/null || true
-
-          # 移动参考文献 PDF
-          cp docs/refs/*.pdf "$PUB/academic/" 2>/dev/null || true
-
           # 动态生成学术报告链接区块
           PDF_HTML_SNIPPET=""
           if [ -d "academic-temp" ] && [ "$(ls -A academic-temp/*.pdf 2>/dev/null)" ]; then
-            PDF_HTML_SNIPPET="<div class='mt-6 pt-6 border-t border-slate-200 dark:border-slate-700'><h3 class='text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center'><i class='fa-solid fa-graduation-cap mr-2'></i>学术报告 (Academic Reports)</h3><div class='grid grid-cols-1 gap-3'>"
+            PDF_HTML_SNIPPET="<section class=\"academic-reports\"><h3>学术报告 (Academic Reports)</h3><ul>"
             for pdf in academic-temp/*.pdf; do
               filename=$(basename "$pdf")
               displayname=$(echo "$filename" | sed 's/\.pdf//; s/_/ /g')
-              cp "$pdf" "$PUB/academic/"
-              PDF_HTML_SNIPPET="${PDF_HTML_SNIPPET}<a href='./academic/${filename}' target='_blank' class='flex items-center p-3 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium'><i class='fa-solid fa-file-pdf text-red-500 mr-3 text-lg'></i>${displayname}</a>"
+              cp "$pdf" "$PUB/academic/reports/"
+              PDF_HTML_SNIPPET="${PDF_HTML_SNIPPET}<li><a href=\"./academic/reports/${filename}\" target=\"_blank\" rel=\"noopener\">${displayname}</a></li>"
             done
-            PDF_HTML_SNIPPET="${PDF_HTML_SNIPPET}</div></div>"
+            PDF_HTML_SNIPPET="${PDF_HTML_SNIPPET}</ul></section>"
+          else
+            PDF_HTML_SNIPPET="<p><em>暂无学术报告。</em></p>"
           fi
 
-          # 定位 API 入口
-          API_INDEX=$(find "$PUB/api" -name "index.html" | grep -v "settings.html" | head -n 1)
-          API_PATH=${API_INDEX#$PUB/}
-
           # 生成归档链接
-          ARCHIVE_SNIPPET=$( [ -d "$PUB/archive" ] && ls "$PUB/archive" | xargs -I {} echo "<a href='./archive/{}/guide/' class='flex items-center text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors'><i class='fa-solid fa-code-commit text-slate-400 mr-3 w-4 text-center'></i>版本 {} 存档</a>" || echo "<span class='text-sm text-slate-400 italic flex items-center'><i class='fa-solid fa-circle-info mr-2'></i>暂无历史归档记录。</span>" )
+          ARCHIVE_SNIPPET="<p><em>暂无历史归档记录。</em></p>"
 
           # 写入构建时间戳
           BUILD_TIME=$(date -u +"%Y-%m-%d %H:%M UTC")
-          TIMESTAMP_SNIPPET="<span class='text-xs text-slate-400 mt-2 block'>构建时间: ${BUILD_TIME}</span>"
+          TIMESTAMP_SNIPPET="<p class=\"build-timestamp\">构建时间: ${BUILD_TIME}</p>"
 
-          sed -e "s|{{API_PATH}}|${API_PATH:-api/index.html}|g" \
-              -e "/<!-- ACADEMIC_REPORTS_PLACEHOLDER -->/r /dev/stdin" \
-              -e "s|<!-- ARCHIVE_LIST_PLACEHOLDER -->|${ARCHIVE_SNIPPET}|g" \
-              -e "s|<!-- BUILD_TIMESTAMP_PLACEHOLDER -->|${TIMESTAMP_SNIPPET}|g" \
-              docs/index.html > "$PUB/index.html" << EOR
-          ${PDF_HTML_SNIPPET}
-          EOR
+          # 注入占位符到构建好的首页
+          export PDF_HTML_SNIPPET ARCHIVE_SNIPPET TIMESTAMP_SNIPPET
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          index = Path("public_html/index.html")
+          html = index.read_text(encoding="utf-8")
+          for placeholder, snippet in {
+              "<!-- ACADEMIC_REPORTS_PLACEHOLDER -->": os.environ["PDF_HTML_SNIPPET"],
+              "<!-- ARCHIVE_LIST_PLACEHOLDER -->": os.environ["ARCHIVE_SNIPPET"],
+              "<!-- BUILD_TIMESTAMP_PLACEHOLDER -->": os.environ["TIMESTAMP_SNIPPET"],
+          }.items():
+              html = html.replace(placeholder, snippet)
+          index.write_text(html, encoding="utf-8")
+          PY
 
           # 输出结果
           mv "$PUB" deployment_payload
@@ -235,20 +218,18 @@ jobs:
       - name: Assemble Preview Site
         run: |
           PUB="public_html"
-          mkdir -p "$PUB/guide" "$PUB/api" "$PUB/slides"
+          mkdir -p "$PUB/api"
 
-          cp -r site-temp/docs/book/* "$PUB/guide/"
+          # MkDocs 输出成为站点根
+          cp -r site-temp/docs/site/* "$PUB/"
           cp -r site-temp/target/doc/* "$PUB/api/"
-          cp -r docs/slides/* "$PUB/slides/" 2>/dev/null || true
 
-          API_INDEX=$(find "$PUB/api" -name "index.html" | grep -v "settings.html" | head -n 1)
-          API_PATH=${API_INDEX#$PUB/}
-
-          sed -e "s|{{API_PATH}}|${API_PATH:-api/index.html}|g" \
-              -e "s|<!-- ARCHIVE_LIST_PLACEHOLDER -->|<span class='text-sm text-slate-400 italic flex items-center'><i class='fa-solid fa-circle-info mr-2'></i>PR 预览模式 — 归档仅在 main 分支可用。</span>|g" \
-              -e "s|<!-- ACADEMIC_REPORTS_PLACEHOLDER -->|<div class='mt-6 pt-6 border-t border-slate-200 dark:border-slate-700'><span class='text-sm text-slate-400 italic'>学术报告仅随 main 分支发布。</span></div>|g" \
-              -e "s|<!-- BUILD_TIMESTAMP_PLACEHOLDER -->|<span class='text-xs text-slate-400 mt-2 block'>PR 预览构建</span>|g" \
-              docs/index.html > "$PUB/index.html"
+          # 注入 PR 预览专用占位文本
+          sed -i \
+            -e "s|<!-- ACADEMIC_REPORTS_PLACEHOLDER -->|<p><em>学术报告仅随 main 分支发布。</em></p>|g" \
+            -e "s|<!-- ARCHIVE_LIST_PLACEHOLDER -->|<p><em>PR 预览模式 — 归档仅在 main 分支可用。</em></p>|g" \
+            -e "s|<!-- BUILD_TIMESTAMP_PLACEHOLDER -->|<p class=\"build-timestamp\">PR 预览构建</p>|g" \
+            "$PUB/index.html"
 
       - name: Upload Preview Artifact
         uses: actions/upload-artifact@v4
