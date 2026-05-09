@@ -25,6 +25,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 1
 
 jobs:
   # 1. 编译 MkDocs 与 Rust API 文档
@@ -33,6 +34,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-doc-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-doc-${{ runner.os }}-
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('docs/uv.lock') }}
+          restore-keys: uv-${{ runner.os }}-
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
@@ -79,10 +98,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache TeX Live apt packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/apt-archives
+          key: apt-texlive-${{ runner.os }}-${{ hashFiles('.github/workflows/docs.yml') }}
+
+      - name: Restore apt archives
+        run: |
+          if ls ~/.cache/apt-archives/*.deb >/dev/null 2>&1; then
+            sudo cp ~/.cache/apt-archives/*.deb /var/cache/apt/archives/
+          fi
+
       - name: Install TeX Live
         run: |
           sudo apt-get update
           sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra latexmk
+          mkdir -p ~/.cache/apt-archives
+          sudo cp /var/cache/apt/archives/*.deb ~/.cache/apt-archives/ 2>/dev/null || true
+          sudo chown -R $(whoami) ~/.cache/apt-archives/
 
       - name: Build Academic Reports
         working-directory: docs/academic-src
@@ -133,6 +167,7 @@ jobs:
           path: site-temp
 
       - name: Download Academic Artifacts
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: academic-pdfs
