@@ -23,6 +23,7 @@ dependencies = [
 name = "aios-agent"
 version = "0.1.0"
 dependencies = [
+ "aios-core",
  "aios-spec",
  "tracing",
  "uuid",

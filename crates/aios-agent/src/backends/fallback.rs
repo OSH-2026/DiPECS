@@ -1,6 +1,10 @@
 //! FallbackNoOpBackend — circuit breaker 熔断后的最终安全后端。
 //!
-//! 返回单个 Idle/NoOp 意图，confidence 为 0.0，并附加 error 信息。
+//! 返回单个 Idle/NoOp 意图。`confidence` 取 1.0：
+//! "做什么也不做" 是确定性的安全选择，不应被 policy 的置信度门槛
+//! (policy_engine 默认 0.3) 拦截。后端层面的失败信号由
+//! `DecisionBackendResult::error` 单独承载，与意图置信度解耦，
+//! 这样 fallback 路径产生的 NoOp 仍能流向 executor 形成完整审计链。
 
 use std::time::Instant;
 
@@ -21,7 +25,7 @@ impl DecisionBackend for FallbackNoOpBackend {
             intents: vec![Intent {
                 intent_id: new_id(),
                 intent_type: IntentType::Idle,
-                confidence: 0.0,
+                confidence: 1.0,
                 risk_level: RiskLevel::Low,
                 suggested_actions: vec![SuggestedAction {
                     action_type: ActionType::NoOp,

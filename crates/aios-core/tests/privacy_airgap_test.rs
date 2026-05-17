@@ -407,3 +407,42 @@ fn test_very_long_notification_text_length_preserved_content_not_leaked() {
         _ => panic!("expected Notification event"),
     }
 }
+
+#[test]
+fn test_sanitize_with_tier_overrides_default() {
+    let sanitizer = DefaultPrivacyAirGap;
+
+    // ProcStateChange defaults to SourceTier::Daemon; override to PublicApi.
+    let raw = RawEvent::ProcStateChange(ProcStateEvent {
+        timestamp_ms: 1000,
+        pid: 42,
+        uid: 10123,
+        package_name: Some("com.test".into()),
+        vm_rss_kb: 1024,
+        vm_swap_kb: 0,
+        threads: 4,
+        oom_score: 0,
+        io_read_mb: 0,
+        io_write_mb: 0,
+        state: ProcState::Running,
+    });
+
+    let sanitized = sanitizer.sanitize_with_tier(raw, SourceTier::PublicApi);
+    assert_eq!(sanitized.source_tier, SourceTier::PublicApi);
+}
+
+#[test]
+fn test_sanitize_with_tier_overrides_public_api_to_daemon() {
+    let sanitizer = DefaultPrivacyAirGap;
+
+    // AppTransition defaults to SourceTier::PublicApi; override to Daemon.
+    let raw = RawEvent::AppTransition(AppTransitionRawEvent {
+        timestamp_ms: 1000,
+        package_name: "com.test".into(),
+        activity_class: None,
+        transition: AppTransition::Foreground,
+    });
+
+    let sanitized = sanitizer.sanitize_with_tier(raw, SourceTier::Daemon);
+    assert_eq!(sanitized.source_tier, SourceTier::Daemon);
+}

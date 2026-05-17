@@ -447,10 +447,37 @@ fn test_fallback_noop_returns_single_idle_intent() {
     assert_eq!(result.intent_batch.intents.len(), 1);
     let intent = &result.intent_batch.intents[0];
     assert!(matches!(intent.intent_type, IntentType::Idle));
-    assert_eq!(intent.confidence, 0.0);
+    assert_eq!(intent.confidence, 1.0);
     assert_eq!(intent.suggested_actions.len(), 1);
     assert!(matches!(
         intent.suggested_actions[0].action_type,
+        ActionType::NoOp
+    ));
+}
+
+#[test]
+fn test_fallback_noop_passes_policy_engine() {
+    use aios_agent::DecisionBackend;
+    use aios_agent::FallbackNoOpBackend;
+    use aios_core::policy_engine::PolicyEngine;
+
+    let ctx = make_context(vec![], make_summary());
+    let result = FallbackNoOpBackend.evaluate(&ctx);
+    let capability = CapabilityLevel::for_route(DecisionRoute::FallbackNoOp);
+
+    let decisions =
+        PolicyEngine::default().evaluate_batch_with_capability(&result.intent_batch, &capability);
+
+    assert_eq!(decisions.len(), 1);
+    let decision = &decisions[0];
+    assert!(
+        decision.approved,
+        "fallback NoOp must clear policy gate; got reject reason {:?}",
+        decision.rejection_reason,
+    );
+    assert_eq!(decision.approved_actions.len(), 1);
+    assert!(matches!(
+        decision.approved_actions[0].action.action_type,
         ActionType::NoOp
     ));
 }

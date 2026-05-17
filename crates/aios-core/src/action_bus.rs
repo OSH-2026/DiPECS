@@ -6,17 +6,17 @@
 //! `Sender` 端可以自由克隆分发给采集/推理任务；
 //! `Receiver` 端由处理管道独占消费，不对外暴露。
 
-use aios_spec::{IntentBatch, RawEvent};
+use aios_spec::{IngestedRawEvent, IntentBatch};
 use tokio::sync::mpsc;
 
 /// 动作总线
 ///
 /// 包含两条独立通道:
-/// - raw_events: collector 向 core 推送原始事件
+/// - raw_events: collector 向 core 推送已贴上 SourceTier 的原始事件
 /// - intents: agent 向 core 回传意图批次
 pub struct ActionBus {
-    raw_events_rx: mpsc::Receiver<RawEvent>,
-    raw_events_tx: mpsc::Sender<RawEvent>,
+    raw_events_rx: mpsc::Receiver<IngestedRawEvent>,
+    raw_events_tx: mpsc::Sender<IngestedRawEvent>,
     intent_rx: mpsc::Receiver<IntentBatch>,
     intent_tx: mpsc::Sender<IntentBatch>,
 }
@@ -34,7 +34,7 @@ impl ActionBus {
     }
 
     /// 获取原始事件发送端的克隆（给 collector 任务）
-    pub fn raw_sender(&self) -> mpsc::Sender<RawEvent> {
+    pub fn raw_sender(&self) -> mpsc::Sender<IngestedRawEvent> {
         self.raw_events_tx.clone()
     }
 
@@ -44,7 +44,7 @@ impl ActionBus {
     }
 
     /// 阻塞等待下一个原始事件（处理管道独占调用）
-    pub async fn recv_raw(&mut self) -> Option<RawEvent> {
+    pub async fn recv_raw(&mut self) -> Option<IngestedRawEvent> {
         self.raw_events_rx.recv().await
     }
 

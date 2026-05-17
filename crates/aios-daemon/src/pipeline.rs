@@ -7,11 +7,12 @@ use aios_agent::DecisionRouter;
 use aios_collector::collection_stats::RawEventStats;
 use aios_core::policy_engine::PolicyEngine;
 use aios_spec::traits::ActionExecutor;
-use aios_spec::{CapabilityLevel, RawEvent};
+use aios_spec::{CapabilityLevel, IngestedRawEvent};
 
 /// 处理一个上下文窗口: decision router → validate → execute
 pub(crate) fn process_window(
     ctx: &aios_spec::StructuredContext,
+    router: &DecisionRouter,
     policy: &PolicyEngine,
     executor: &DefaultActionExecutor,
     raw_stats: &RawEventStats,
@@ -25,7 +26,7 @@ pub(crate) fn process_window(
         "window closed, sending to agent"
     );
 
-    let decision_result = DecisionRouter::default().evaluate(ctx);
+    let decision_result = router.evaluate(ctx);
     tracing::info!(
         route = ?decision_result.route,
         model = %decision_result.intent_batch.model,
@@ -82,7 +83,7 @@ pub(crate) fn process_window(
 
 #[derive(Debug)]
 pub enum ProcessingEvent {
-    Raw(RawEvent),
+    Raw(IngestedRawEvent),
     RawChannelClosed,
     WindowExpired,
 }

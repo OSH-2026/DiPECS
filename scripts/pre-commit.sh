@@ -158,4 +158,4 @@ if [ "$CHECK_ANDROID_TARGET" -eq 1 ]; then
 fi
 
 echo -e "${GREEN}检查通过，允许提交！${NC}"
-exit 0
+# exit 0

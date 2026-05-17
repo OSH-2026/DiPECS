@@ -28,6 +28,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use aios_action::DefaultActionExecutor;
+use aios_agent::DecisionRouter;
 use aios_collector::{
     binder_probe::BinderProbe,
     collection_stats::RawEventStats,
@@ -168,6 +169,7 @@ pub async fn run() -> anyhow::Result<()> {
     tracing::info!("processing task started");
 
     let sanitizer = DefaultPrivacyAirGap;
+    let router = DecisionRouter::default();
     let policy = PolicyEngine::default();
     let executor = DefaultActionExecutor;
     let window_dur = Duration::from_secs(WINDOW_DURATION_SECS);
@@ -202,7 +204,7 @@ pub async fn run() -> anyhow::Result<()> {
             tracing::info!("raw event channel closed, flushing remaining events");
             let window_stats = std::mem::take(&mut raw_stats);
             if let Some(ctx) = window.close(timestamp_ms()) {
-                pipeline::process_window(&ctx, &policy, &executor, &window_stats);
+                pipeline::process_window(&ctx, &router, &policy, &executor, &window_stats);
             }
             break;
         }
@@ -210,9 +212,10 @@ pub async fn run() -> anyhow::Result<()> {
         let window_expired = matches!(processing_event, ProcessingEvent::WindowExpired);
 
         match processing_event {
-            ProcessingEvent::Raw(raw) => {
-                raw_stats.record(&raw);
-                let sanitized = sanitizer.sanitize(raw);
+            ProcessingEvent::Raw(ingested) => {
+                raw_stats.record(&ingested.raw_event);
+                let sanitized =
+                    sanitizer.sanitize_with_tier(ingested.raw_event, ingested.source_tier);
                 window.push(sanitized);
             },
             ProcessingEvent::RawChannelClosed => unreachable!("handled before event dispatch"),
@@ -223,7 +226,7 @@ pub async fn run() -> anyhow::Result<()> {
         if window_expired || Instant::now() >= window_deadline {
             let window_stats = std::mem::take(&mut raw_stats);
             if let Some(ctx) = window.close(timestamp_ms()) {
-                pipeline::process_window(&ctx, &policy, &executor, &window_stats);
+                pipeline::process_window(&ctx, &router, &policy, &executor, &window_stats);
             }
             window_deadline = Instant::now() + window_dur;
         }

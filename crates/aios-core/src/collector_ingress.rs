@@ -1,4 +1,4 @@
-use aios_spec::{CollectorEnvelope, RawEvent, SourceTier};
+use aios_spec::{CollectorEnvelope, IngestedRawEvent, RawEvent, SourceTier};
 use thiserror::Error;
 
 const SUPPORTED_COLLECTOR_SCHEMA: &str = "dipecs.collector.v1";
@@ -6,38 +6,46 @@ const SUPPORTED_COLLECTOR_SCHEMA: &str = "dipecs.collector.v1";
 /// Rust 侧 collector 入口。
 ///
 /// 所有进入 core 管线的 `RawEvent` 都必须通过此入口，无论来自
-/// apps 侧 (JSONL/JNI/socket) 还是 Rust 系统采集器。
+/// apps 侧 (JSONL/JNI/socket) 还是 Rust 系统采集器。`SourceTier`
+/// 由入口权威决定，并随 `IngestedRawEvent` 一路传递到脱敏器。
 #[derive(Debug, Default)]
 pub struct RustCollectorIngress;
 
 impl RustCollectorIngress {
     /// 校验并解包来自 apps 侧或外部系统的 envelope。
-    pub fn accept(&self, envelope: CollectorEnvelope) -> Result<RawEvent, CollectorIngressError> {
+    ///
+    /// envelope 中声明的 `source_tier` 会随事件一并返回，供下游脱敏器
+    /// 与策略层使用。
+    pub fn accept(
+        &self,
+        envelope: CollectorEnvelope,
+    ) -> Result<IngestedRawEvent, CollectorIngressError> {
         if envelope.schema_version != SUPPORTED_COLLECTOR_SCHEMA {
             return Err(CollectorIngressError::UnsupportedSchemaVersion(
                 envelope.schema_version,
             ));
         }
-        Ok(envelope.raw_event)
+        Ok(IngestedRawEvent {
+            raw_event: envelope.raw_event,
+            source_tier: envelope.source_tier,
+        })
     }
 
-    /// 包装并接入来自 Rust 系统采集器的事件。
+    /// 包装来自 Rust 系统采集器的事件。
     ///
-    /// 内部采集器是受信来源，自动填充当前 schema 版本、
-    /// `SourceTier::Daemon` 和设备侧 trace id。
-    pub fn accept_internal(&self, raw: RawEvent, source: &str, captured_at_ms: i64) -> RawEvent {
-        let _envelope = CollectorEnvelope {
-            schema_version: SUPPORTED_COLLECTOR_SCHEMA.into(),
-            source: source.into(),
-            source_tier: SourceTier::Daemon,
-            device_trace_id: None,
-            captured_at_ms,
-            received_at_ms: None,
+    /// 内部采集器是受信来源，固定标记为 `SourceTier::Daemon`。
+    /// `source` 和 `captured_at_ms` 当前仅用于调用方诊断，
+    /// 未来可在 envelope 化改造后接入 Trace。
+    pub fn accept_internal(
+        &self,
+        raw: RawEvent,
+        _source: &str,
+        _captured_at_ms: i64,
+    ) -> IngestedRawEvent {
+        IngestedRawEvent {
             raw_event: raw,
-        };
-        // 内部事件自动通过 schema 校验，直接返回 RawEvent。
-        // envelope 元信息未来可用于 Trace，当前不进核心管线。
-        _envelope.raw_event
+            source_tier: SourceTier::Daemon,
+        }
     }
 }
 

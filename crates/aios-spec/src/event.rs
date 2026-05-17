@@ -48,6 +48,16 @@ pub struct CollectorEnvelope {
     pub raw_event: RawEvent,
 }
 
+/// `RawEvent` packaged with the authoritative `SourceTier` declared by its
+/// ingress (envelope or internal collector). This is the only shape that
+/// flows through the core bus — the tier travels with the event so the
+/// downstream sanitizer can honor it instead of re-inferring per type.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct IngestedRawEvent {
+    pub raw_event: RawEvent,
+    pub source_tier: SourceTier,
+}
+
 // ===== RawEvent 子类型 =====
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

@@ -3,20 +3,23 @@
 use aios_core::action_bus::ActionBus;
 use aios_spec::*;
 
-fn make_raw_event() -> RawEvent {
-    RawEvent::ProcStateChange(ProcStateEvent {
-        timestamp_ms: 1000,
-        pid: 42,
-        uid: 10123,
-        package_name: Some("com.test.app".into()),
-        vm_rss_kb: 128000,
-        vm_swap_kb: 0,
-        threads: 8,
-        oom_score: 0,
-        io_read_mb: 1,
-        io_write_mb: 2,
-        state: ProcState::Running,
-    })
+fn make_raw_event() -> IngestedRawEvent {
+    IngestedRawEvent {
+        raw_event: RawEvent::ProcStateChange(ProcStateEvent {
+            timestamp_ms: 1000,
+            pid: 42,
+            uid: 10123,
+            package_name: Some("com.test.app".into()),
+            vm_rss_kb: 128000,
+            vm_swap_kb: 0,
+            threads: 8,
+            oom_score: 0,
+            io_read_mb: 1,
+            io_write_mb: 2,
+            state: ProcState::Running,
+        }),
+        source_tier: SourceTier::Daemon,
+    }
 }
 
 fn make_intent_batch() -> IntentBatch {
