@@ -1,0 +1,42 @@
+[package]
+name = "lab4-tools"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "lab4-prompts"
+path = "src/bin/lab4-prompts.rs"
+
+[[bin]]
+name = "lab4-bench"
+path = "src/bin/lab4-bench.rs"
+
+[[bin]]
+name = "lab4-storage"
+path = "src/bin/lab4-storage.rs"
+
+[[bin]]
+name = "lab4-summarize"
+path = "src/bin/lab4-summarize.rs"
+
+[[bin]]
+name = "lab4-env"
+path = "src/bin/lab4-env.rs"
+
+[[bin]]
+name = "lab4-llama"
+path = "src/bin/lab4-llama.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+libc = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }

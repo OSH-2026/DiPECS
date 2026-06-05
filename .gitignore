@@ -77,3 +77,17 @@ CLAUDE.md
 /othergroups/
 /wxzprivate/
 *.patch
+
+# --- [ 7. Lab4 大模型与第三方构建产物 ] ---
+# GGUF/权重文件通常数百 MB 到数 GB，不直接提交 Git。
+lab4/data/models/*.gguf
+lab4/data/models/*.bin
+lab4/data/models/*.safetensors
+lab4/data/models/*.pt
+lab4/data/models/*.pth
+!lab4/data/models/placeholder.model
+!lab4/data/models/README.md
+
+# llama.cpp 作为 submodule 指针提交，构建产物不提交。
+lab4/third_party/llama.cpp/build*/
+lab4/third_party/llama.cpp/.cache/

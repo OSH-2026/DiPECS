@@ -1,0 +1,18 @@
+[workspace]
+members = ["crates/lab4-tools"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["DiPECS Team <augustlin114514@qq.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/114August514/DiPECS"
+
+[workspace.dependencies]
+anyhow = "1.0"
+clap = { version = "4", features = ["derive"] }
+libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
