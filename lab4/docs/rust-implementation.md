@@ -114,11 +114,13 @@ cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-llama -- benc
 cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
   --prompts lab4/data/prompts/quality-prompts.jsonl \
   --executable lab4/third_party/llama.cpp/build/bin/llama-cli \
-  --model lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  --model lab4/data/models/qwen3.5-2b-q4_k_m.gguf \
   --output lab4/data/results/single-quality.jsonl \
   --mode single \
   --case-prefix single-quality \
-  --arg=--threads --arg=8
+  --arg=--threads --arg=12 \
+  --arg=--reasoning --arg=off \
+  --arg=--reasoning-budget --arg=0
 
 cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-storage -- read \
   --case-id local-model-read-001 \

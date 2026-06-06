@@ -17,10 +17,10 @@ Lab4 的核心问题是：在普通个人电脑或小组多机环境中，如何
 | 工作项 | 状态 | 已有证据 |
 | :--- | :--- | :--- |
 | Rust 实验工具与测试 | 已完成基础版 | `lab4/crates/lab4-tools`，支持 JSONL、命令记录、汇总和重复执行 |
-| llama.cpp 与真实 GGUF 接入 | 已完成 | 固定 submodule commit，Qwen2.5-1.5B Q4_K_M 本地模型 |
+| llama.cpp 与真实 GGUF 接入 | 已完成 | 固定 submodule commit；Qwen2.5 为历史基线，Qwen3.5-2B Q4_K_M 为当前模型 |
 | 单机冒烟 | 已完成 | `lab4/reports/smoke.md` |
-| 单机参数实验 | 已完成首轮 | 线程、batch、上下文、`mmap`，见 `lab4/reports/performance-analysis.md` |
-| 输出质量评估 | 已完成首轮 | 5 类 prompt、2 组温度，见 `lab4/reports/quality-evaluation.md` |
+| 单机参数实验 | Qwen2.5 首轮已完成 | 线程、batch、上下文、`mmap`；切换 Qwen3.5 后需要重跑 |
+| 输出质量评估 | Qwen2.5 首轮已完成 | 5 类 prompt、2 组温度；切换 Qwen3.5 后需要重跑 |
 | 内存峰值与真实 TTFT | 待补充 | 当前工具未单独采集峰值 RSS 和首 token 时间 |
 | RPC 双机推理 | 待执行 | 需要第二台机器运行 `rpc-server` |
 | Ceph 扩展 | 待执行 | 需要部署或提供可访问的 Ceph 环境 |
@@ -59,7 +59,7 @@ Lab4 的核心问题是：在普通个人电脑或小组多机环境中，如何
 
 ### 2. 单机部署
 
-需要选择一款 GGUF 量化模型，并完成单机推理。推荐优先使用 1B 或 3B 级别模型，例如 Qwen2.5-1.5B-Instruct-GGUF 的 Q4_K_M 量化版本。
+需要选择一款 GGUF 量化模型，并完成单机推理。本仓库当前使用 Qwen3.5-2B 的 Q4_K_M 量化版本；此前 Qwen2.5-1.5B 数据保留为历史基线。
 
 报告需要记录：
 
@@ -113,6 +113,9 @@ Lab4 的核心问题是：在普通个人电脑或小组多机环境中，如何
 ### 6. RPC 分布式推理
 
 需要至少使用 2 台机器，其中一台主机运行 `llama-cli --rpc`，至少一台从机运行 `rpc-server`。
+
+本仓库的主机、WSL2/Ubuntu 从机、CPU/CUDA 构建、网络配置和正式测量步骤见
+[RPC 双机操作手册](rpc-two-machine-setup.md)。
 
 报告需要记录：
 

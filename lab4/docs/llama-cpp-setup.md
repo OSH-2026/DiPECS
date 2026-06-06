@@ -86,25 +86,24 @@ cmake --build build-cuda --config Release -j "$(nproc)"
 
 ## 下载 GGUF 模型
 
-推荐先用 Qwen2.5 1.5B Instruct 的 Q4_K_M 量化模型，体积和质量比较适合普通笔记本。
+当前后续实验使用 Qwen3.5-2B 的 Q4_K_M 社区量化模型。此前 Qwen2.5-1.5B 的
+结果保留为历史基线，不与 Qwen3.5 数据直接混合。
 
-下载模型（推荐用镜像站，国内访问更快）：
+下载模型：
 
 ```bash
 mkdir -p lab4/data/models
 
 wget --show-progress -c \
-  "https://hf-mirror.com/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf" \
-  -O lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf
+  "https://huggingface.co/bartowski/Qwen_Qwen3.5-2B-GGUF/resolve/main/Qwen_Qwen3.5-2B-Q4_K_M.gguf?download=true" \
+  -O lab4/data/models/qwen3.5-2b-q4_k_m.gguf
 ```
 
-也可以让新版 `llama.cpp` 直接通过 `-hf` 拉取模型缓存：
+校验当前文件：
 
 ```bash
-lab4/third_party/llama.cpp/build/bin/llama-cli \
-  -hf Qwen/Qwen2.5-1.5B-Instruct-GGUF:Q4_K_M \
-  -p "用中文解释什么是操作系统页缓存。" \
-  -n 128
+sha256sum lab4/data/models/qwen3.5-2b-q4_k_m.gguf
+# 57a1085840f497d764a7fc5d346922dbde961efb54cc792ea81d694fd846a1d8
 ```
 
 为了实验可复现，更推荐显式下载 `.gguf` 到 `lab4/data/models/`，然后用 `-m` 指定路径。
@@ -113,10 +112,12 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
 
 ```bash
 lab4/third_party/llama.cpp/build/bin/llama-cli \
-  -m lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  -m lab4/data/models/qwen3.5-2b-q4_k_m.gguf \
   -p "用中文解释什么是操作系统页缓存。" \
   -n 128 \
-  --threads 8
+  --threads 12 \
+  --reasoning off \
+  --reasoning-budget 0
 ```
 
 使用 Rust 工具记录结果：
@@ -125,33 +126,22 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
 cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
   --prompts lab4/data/prompts/quality-prompts.jsonl \
   --executable lab4/third_party/llama.cpp/build/bin/llama-cli \
-  --model lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  --model lab4/data/models/qwen3.5-2b-q4_k_m.gguf \
   --output lab4/data/results/single-quality.jsonl \
   --mode single \
   --case-prefix single-quality \
-  --arg=--threads --arg=8
+  --arg=--threads --arg=12 \
+  --arg=--reasoning --arg=off \
+  --arg=--reasoning-budget --arg=0
 ```
 
 ## RPC smoke 测试
 
-从机：
+双机部署涉及 WSL2 NAT/镜像网络、Windows 防火墙、CPU/CUDA worker 构建和
+单机/RPC 对照测试。完整流程见
+[RPC 双机操作手册](rpc-two-machine-setup.md)。
 
-```bash
-lab4/third_party/llama.cpp/build/bin/rpc-server -H 0.0.0.0 -p 50052
-```
-
-主机：
-
-```bash
-lab4/third_party/llama.cpp/build/bin/llama-cli \
-  -m lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
-  -p "RPC 分布式推理为什么可能比单机更慢？" \
-  -n 128 \
-  --threads 8 \
-  --rpc 192.168.1.10:50052
-```
-
-`rpc-server` 不要暴露到公网。只在可信局域网或实验网络中运行。
+`rpc-server` 没有认证和传输加密，不要暴露到公网，只在可信局域网中运行。
 
 ## 记录要求
 
@@ -168,4 +158,4 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
 
 - `llama.cpp` 官方构建文档：<https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md>
 - `llama.cpp` RPC 文档：<https://github.com/ggml-org/llama.cpp/blob/master/tools/rpc/README.md>
-- Qwen2.5 1.5B Instruct GGUF：<https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF>
+- Qwen3.5-2B Q4_K_M GGUF：<https://huggingface.co/bartowski/Qwen_Qwen3.5-2B-GGUF/blob/main/Qwen_Qwen3.5-2B-Q4_K_M.gguf>

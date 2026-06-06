@@ -21,6 +21,7 @@ Lab4 要围绕本地大模型推理系统完成一次从部署、测量、优化
 - [OS 知识点](os-knowledge.md)：总结本实验涉及的操作系统与分布式系统知识点。
 - [Rust 实现约束](rust-implementation.md)：约定后续代码目录、工具边界、测试方式和仓库规范。
 - [llama.cpp 与 GGUF 模型接入](llama-cpp-setup.md)：说明 submodule、CMake 构建和模型下载流程。
+- [RPC 双机操作手册](rpc-two-machine-setup.md)：说明 Linux 主机与 WSL2/Ubuntu 从机的 CPU、CUDA、网络和对照实验流程。
 
 ## 当前执行路线
 
@@ -49,9 +50,10 @@ Lab4 要围绕本地大模型推理系统完成一次从部署、测量、优化
 - `lab4/reports/quality-evaluation.md`：固定 prompt 的温度对比与人工评分。
 - `lab4/reports/ceph-analysis.md`：Ceph 扩展分析模板。
 - `lab4/reports/smoke.md`：真实 GGUF 单机推理与基准冒烟结果。
+- `lab4/docs/rpc-two-machine-setup.md`：可直接执行的 RPC 双机部署与测量步骤。
 
 ## 当前进度
 
-- 已完成：真实模型单机 smoke、线程矩阵、batch 矩阵、上下文与 `mmap` 对比、两组温度质量评估。
-- 待补充：峰值 RSS、真实 TTFT、双机 RPC、Ceph 存储对比和最终截图。
-- 当前推荐 CPU 配置：`threads=12, batch=64, ctx=1024, mmap=on`。
+- 已完成：Qwen2.5-1.5B 单机 smoke、线程矩阵、batch 矩阵、上下文与 `mmap` 对比、两组温度质量评估。
+- 当前模型：后续实验切换为 Qwen3.5-2B Q4_K_M；已有 Qwen2.5 数据保留为历史基线，参数结论需要在新模型上重新验证。
+- 待补充：Qwen3.5 单机重跑、峰值 RSS、真实 TTFT、双机 RPC、Ceph 存储对比和最终截图。

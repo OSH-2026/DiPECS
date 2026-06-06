@@ -19,16 +19,14 @@ cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-env
 
 ## 分项二：模型信息
 
-| 字段 | 内容 |
-| :--- | :--- |
-| 模型名称 | Qwen2.5-1.5B-Instruct-GGUF |
-| 参数规模 | 1.5B |
-| GGUF 量化格式 | Q4_K_M |
-| 文件大小 | 1,117,320,736 bytes |
-| SHA-256 | `6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e` |
-| 本地路径 | `lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf` |
+| 用途 | 模型 | 量化 | 文件大小 | SHA-256 |
+| :--- | :--- | :--- | ---: | :--- |
+| 已完成的单机基线 | Qwen2.5-1.5B-Instruct | Q4_K_M | 1,117,320,736 bytes | `6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e` |
+| 当前 RPC 与后续重跑 | Qwen3.5-2B | Q4_K_M | 1,396,198,496 bytes | `57a1085840f497d764a7fc5d346922dbde961efb54cc792ea81d694fd846a1d8` |
 
-模型文件由 `.gitignore` 排除，只提交路径约定、校验值和实验结果，不提交权重。
+当前模型路径为 `lab4/data/models/qwen3.5-2b-q4_k_m.gguf`。模型文件由
+`.gitignore` 排除，只提交路径约定、校验值和实验结果，不提交权重。两种模型的
+性能结果不能直接混入同一参数对比表。
 
 ## 分项三：llama.cpp 单机部署
 
@@ -52,7 +50,7 @@ cmake --build build --config Release -j "$(nproc)"
 | 构建后端 | CPU，已启用 RPC 组件 |
 | 模型磁盘 | 本地 NVMe SSD |
 
-单机推理命令：
+Qwen2.5 历史单机基线命令：
 
 ```bash
 lab4/third_party/llama.cpp/build/bin/llama-cli \
@@ -62,7 +60,7 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
   --threads 8
 ```
 
-Rust 工具批量测量命令：
+Qwen2.5 历史批量测量命令：
 
 ```bash
 cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
@@ -77,21 +75,34 @@ cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
 
 ## 分项四：RPC 分布式部署
 
-从机命令：
+完整部署步骤见
+[`lab4/docs/rpc-two-machine-setup.md`](../docs/rpc-two-machine-setup.md)。正式实验后
+在本节补充实际 IP、网络类型、worker 后端、启动日志和截图。
+
+从机最小命令：
 
 ```bash
-lab4/third_party/llama.cpp/build/bin/rpc-server -H 0.0.0.0 -p 50052
+lab4/third_party/llama.cpp/build-rpc-cpu/bin/rpc-server \
+  --host 0.0.0.0 \
+  --port 50052 \
+  --threads "$(nproc)" \
+  --cache
 ```
 
-主机推理命令：
+主机 Qwen3.5-2B smoke：
 
 ```bash
 lab4/third_party/llama.cpp/build/bin/llama-cli \
-  -m lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
+  -m lab4/data/models/qwen3.5-2b-q4_k_m.gguf \
   -p "RPC 分布式推理会引入哪些网络开销？" \
-  -n 128 \
-  --threads 8 \
-  --rpc 192.168.1.10:50052
+  -n 64 \
+  --threads 12 \
+  --ctx-size 1024 \
+  --batch-size 64 \
+  --reasoning off \
+  --reasoning-budget 0 \
+  --n-gpu-layers all \
+  --rpc <WORKER_IP>:50052
 ```
 
 ## 分项五：Ceph 环境
