@@ -9,24 +9,26 @@
 环境采集命令：
 
 ```bash
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-env
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-env
 ```
 
 | 节点 | 角色 | CPU | 内存 | GPU | OS / Kernel | IP | 备注 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| host-a | 主机 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 运行 `llama-cli` |
+| archlinux | 主机 | Intel Core i7-13700H，14C/20T | 15,981,548 KiB | Intel Iris Xe + NVIDIA RTX 4060 Laptop | Arch Linux / 7.0.11-arch1-1 | 按实验网络填写 | 当前实验使用 CPU 后端 |
 | host-b | 从机 | 待填写 | 待填写 | 待填写 | 待填写 | 待填写 | 运行 `rpc-server` |
 
 ## 分项二：模型信息
 
 | 字段 | 内容 |
 | :--- | :--- |
-| 模型名称 | 待填写 |
-| 参数规模 | 待填写 |
-| GGUF 量化格式 | 待填写 |
-| 文件大小 | 待填写 |
-| 来源 | 待填写 |
-| 本地路径 | 待填写 |
+| 模型名称 | Qwen2.5-1.5B-Instruct-GGUF |
+| 参数规模 | 1.5B |
+| GGUF 量化格式 | Q4_K_M |
+| 文件大小 | 1,117,320,736 bytes |
+| SHA-256 | `6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e` |
+| 本地路径 | `lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf` |
+
+模型文件由 `.gitignore` 排除，只提交路径约定、校验值和实验结果，不提交权重。
 
 ## 分项三：llama.cpp 单机部署
 
@@ -41,6 +43,15 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DGGML_RPC=ON
 cmake --build build --config Release -j "$(nproc)"
 ```
 
+当前固定版本：
+
+| 项目 | 值 |
+| :--- | :--- |
+| llama.cpp commit | `c4a278d68efa17811006f2123a84081dac03fac7` |
+| llama.cpp build | `b9533-c4a278d68` |
+| 构建后端 | CPU，已启用 RPC 组件 |
+| 模型磁盘 | 本地 NVMe SSD |
+
 单机推理命令：
 
 ```bash
@@ -54,7 +65,7 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
 Rust 工具批量测量命令：
 
 ```bash
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-bench -- \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
   --prompts lab4/data/prompts/quality-prompts.jsonl \
   --executable lab4/third_party/llama.cpp/build/bin/llama-cli \
   --model lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
@@ -97,12 +108,12 @@ lab4/third_party/llama.cpp/build/bin/llama-cli \
 存储测量命令示例：
 
 ```bash
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-storage -- read \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-storage -- read \
   --case-id local-model-read-001 \
   /path/to/model.gguf \
   --output lab4/data/results/storage-local-read.jsonl
 
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-storage -- read \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-storage -- read \
   --case-id ceph-model-read-001 \
   /mnt/ceph/model.gguf \
   --output lab4/data/results/storage-ceph-read.jsonl

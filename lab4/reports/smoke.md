@@ -106,10 +106,13 @@ lab4/third_party/llama.cpp/build/bin/llama-bench \
 
 原始数据：`lab4/data/results/smoke-llama-bench.jsonl`。
 
-## 下一步
+## 后续状态
 
-1. 使用 `llama-bench` 比较线程数 1、2、4、8、12、14、20。
-2. 比较 `mmap=1` 与 `mmap=0` 的加载和推理表现。
-3. 固定 prompt 和生成长度后测试 `batch-size`、`ctx-size`。
-4. 记录内存占用和首次 Token 延迟。
-5. 在第二台机器启动 `rpc-server`，完成真实 RPC smoke。
+线程数、`mmap`、batch、context 和温度对比已经完成，结果见
+`lab4/reports/performance-analysis.md` 与 `lab4/reports/quality-evaluation.md`。
+
+当前仍需：
+
+1. 补充峰值 RSS 和真实首 Token 延迟。
+2. 在第二台机器启动 `rpc-server`，完成真实 RPC smoke。
+3. 部署 Ceph 并比较本地路径与共享存储路径。

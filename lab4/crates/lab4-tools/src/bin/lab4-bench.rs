@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 use clap::Parser;
 use lab4_tools::command::{run_llama_case, LlamaRunConfig};
 use lab4_tools::jsonl::write_jsonl_record;
@@ -52,6 +52,10 @@ struct Args {
     #[arg(long, default_value = "case")]
     case_prefix: String,
 
+    /// Number of times to run every prompt.
+    #[arg(long, default_value_t = 1)]
+    repetitions: usize,
+
     /// Extra llama.cpp argument. Repeat as --arg=--threads --arg=8.
     #[arg(long = "arg")]
     extra_args: Vec<String>,
@@ -59,6 +63,10 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    ensure!(
+        args.repetitions > 0,
+        "--repetitions must be greater than zero"
+    );
     let prompts = load_prompts(&args.prompts)
         .with_context(|| format!("loading prompts {}", args.prompts.display()))?;
     let output = File::create(&args.output)
@@ -74,11 +82,13 @@ fn main() -> Result<()> {
         extra_args: args.extra_args,
     };
 
-    for (index, prompt) in prompts.iter().enumerate() {
-        let case_id = format!("{}-{:03}", args.case_prefix, index + 1);
-        let record = run_llama_case(&config, prompt, case_id)?;
-        write_jsonl_record(&mut writer, &record)?;
-        writer.flush()?;
+    for repetition in 1..=args.repetitions {
+        for (index, prompt) in prompts.iter().enumerate() {
+            let case_id = format!("{}-p{:03}-r{:02}", args.case_prefix, index + 1, repetition);
+            let record = run_llama_case(&config, prompt, case_id)?;
+            write_jsonl_record(&mut writer, &record)?;
+            writer.flush()?;
+        }
     }
     Ok(())
 }

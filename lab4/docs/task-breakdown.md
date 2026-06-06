@@ -12,6 +12,20 @@ Lab4 的核心问题是：在普通个人电脑或小组多机环境中，如何
 
 本仓库实现时选择“`llama.cpp` 主线 + Rust 实验工具 + Ceph 扩展”的路线。`llama.cpp` 通过 `lab4/third_party/llama.cpp` submodule 引入，只提交第三方指针；GGUF 模型放在 `lab4/data/models/` 本地目录，不提交 Git。若后续改选 Ray，需要单独说明为什么在 Rust-only 约束下仍能满足 Ray Task/Actor 的实验要求。
 
+## 当前完成度
+
+| 工作项 | 状态 | 已有证据 |
+| :--- | :--- | :--- |
+| Rust 实验工具与测试 | 已完成基础版 | `lab4/crates/lab4-tools`，支持 JSONL、命令记录、汇总和重复执行 |
+| llama.cpp 与真实 GGUF 接入 | 已完成 | 固定 submodule commit，Qwen2.5-1.5B Q4_K_M 本地模型 |
+| 单机冒烟 | 已完成 | `lab4/reports/smoke.md` |
+| 单机参数实验 | 已完成首轮 | 线程、batch、上下文、`mmap`，见 `lab4/reports/performance-analysis.md` |
+| 输出质量评估 | 已完成首轮 | 5 类 prompt、2 组温度，见 `lab4/reports/quality-evaluation.md` |
+| 内存峰值与真实 TTFT | 待补充 | 当前工具未单独采集峰值 RSS 和首 token 时间 |
+| RPC 双机推理 | 待执行 | 需要第二台机器运行 `rpc-server` |
+| Ceph 扩展 | 待执行 | 需要部署或提供可访问的 Ceph 环境 |
+| 最终截图与提交材料 | 待整理 | 在 RPC、Ceph 完成后统一整理 |
+
 ## 分项一：llama.cpp 主线任务
 
 ### 0. 仓库实现边界

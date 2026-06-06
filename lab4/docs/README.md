@@ -45,6 +45,13 @@ Lab4 要围绕本地大模型推理系统完成一次从部署、测量、优化
 - `lab4/data/prompts/quality-prompts.jsonl`：5 条输出质量评估 prompt。
 - `lab4/data/prompts/batch-prompts.jsonl`：20 条批量测试 prompt。
 - `lab4/reports/deployment.md`：部署说明模板。
-- `lab4/reports/performance-analysis.md`：性能分析模板。
+- `lab4/reports/performance-analysis.md`：本机参数矩阵、系统原因与推荐配置。
+- `lab4/reports/quality-evaluation.md`：固定 prompt 的温度对比与人工评分。
 - `lab4/reports/ceph-analysis.md`：Ceph 扩展分析模板。
 - `lab4/reports/smoke.md`：真实 GGUF 单机推理与基准冒烟结果。
+
+## 当前进度
+
+- 已完成：真实模型单机 smoke、线程矩阵、batch 矩阵、上下文与 `mmap` 对比、两组温度质量评估。
+- 待补充：峰值 RSS、真实 TTFT、双机 RPC、Ceph 存储对比和最终截图。
+- 当前推荐 CPU 配置：`threads=12, batch=64, ctx=1024, mmap=on`。

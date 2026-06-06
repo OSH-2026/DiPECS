@@ -87,12 +87,12 @@ cargo test --manifest-path lab4/Cargo.toml --all-targets
 示例：
 
 ```bash
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-prompts -- lab4/data/prompts/quality-prompts.jsonl
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-prompts -- lab4/data/prompts/quality-prompts.jsonl
 
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-env
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-env
 
 # smoke：验证 Rust 加载、JSONL 和 RPC 流程，不作为正式 LLM 结果
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-llama -- infer \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-llama -- infer \
   --model lab4/data/models/placeholder.model \
   --prompt "从操作系统角度解释 mmap 和页缓存" \
   --max-tokens 80 \
@@ -100,7 +100,7 @@ cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-llama -- infe
   --batch-size 8 \
   --ctx-size 1024
 
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-llama -- bench \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-llama -- bench \
   --prompts lab4/data/prompts/quality-prompts.jsonl \
   --model lab4/data/models/placeholder.model \
   --output lab4/data/results/smoke-rust-llama-quality.jsonl \
@@ -111,7 +111,7 @@ cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-llama -- benc
   --ctx-size 1024
 
 # 正式实验：调用 llama.cpp
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-bench -- \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-bench -- \
   --prompts lab4/data/prompts/quality-prompts.jsonl \
   --executable lab4/third_party/llama.cpp/build/bin/llama-cli \
   --model lab4/data/models/qwen2.5-1.5b-instruct-q4_k_m.gguf \
@@ -120,7 +120,7 @@ cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-bench -- \
   --case-prefix single-quality \
   --arg=--threads --arg=8
 
-cargo --manifest-path lab4/Cargo.toml run -p lab4-tools --bin lab4-storage -- read \
+cargo run --manifest-path lab4/Cargo.toml -p lab4-tools --bin lab4-storage -- read \
   --case-id local-model-read-001 \
   /path/to/model.gguf \
   --output lab4/data/results/storage-local-read.jsonl
