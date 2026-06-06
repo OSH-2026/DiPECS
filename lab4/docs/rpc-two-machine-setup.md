@@ -99,7 +99,7 @@ export WORKER_IP="192.168.1.20"
 export RPC_PORT="50052"
 export WORKER_ENDPOINT="${WORKER_IP}:${RPC_PORT}"
 export MODEL_PATH="$PWD/../../data/models/qwen3.5-2b-q4_k_m.gguf"
-export MAIN_BUILD_DIR="$PWD"
+export MAIN_BUILD_DIR="$PWD/build"
 ```
 
 网络检查：
