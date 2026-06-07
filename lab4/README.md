@@ -1,0 +1,73 @@
+# OS Lab4: llama.cpp、RPC 与 Ray 推理实验
+
+本目录完成课程 Lab4 的两条主线：
+
+- `llama.cpp`：本地 GGUF 推理、性能指标、参数优化、质量测试与双机 RPC。
+- Ray：单机多进程模拟异构推理节点，比较批量调度、负载均衡、并发和故障重试。
+
+正式模型推理由 `llama.cpp` 提供；实验采集和数据处理以 Rust 工具为主。Ray 官方
+Task API 没有受支持的 Rust SDK，因此 Ray 调度部分使用 Python，其他实验工具遵守
+[`docs/src/team/conventions/rust.md`](../docs/src/team/conventions/rust.md)。
+
+## 快速检查
+
+```bash
+git submodule update --init --recursive
+
+sha256sum data/models/qwen3.5-2b-q4_k_m.gguf
+# 57a1085840f497d764a7fc5d346922dbde961efb54cc792ea81d694fd846a1d8
+
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+
+UV_CACHE_DIR=/tmp/dipecs-uv-cache \
+  PYTHONPATH=scripts \
+  uv run python -m unittest discover -s scripts/tests -v
+```
+
+模型文件不进入 Git。模型、llama.cpp 版本和构建步骤见
+[llama.cpp 接入说明](docs/llama-cpp-setup.md)。
+
+## 实验入口
+
+参数优化：
+
+```bash
+UV_CACHE_DIR=/tmp/dipecs-uv-cache uv run python scripts/param_optimization.py
+```
+
+Ray 基础实验使用 20 条 Prompt：
+
+```bash
+.venv/bin/python scripts/ray_batch_inference.py \
+  --prompt-count 20 \
+  --output data/results/ray-batch-results.jsonl
+```
+
+Ray 负载均衡加分实验使用 30 条 Prompt：
+
+```bash
+.venv/bin/python scripts/ray_batch_inference.py \
+  --prompt-count 30 \
+  --strategies round_robin latency_based \
+  --output data/results/ray-loadbalance-30/ray-loadbalance-30-detail.jsonl
+```
+
+Ray 实验应直接使用 `.venv/bin/python`。在当前 Ray/uv 组合中，`uv run` 会自动创建
+runtime environment 并复制 working directory，可能在 16 GiB 主机上触发 OOM。
+
+## 报告索引
+
+- [任务拆解与完成状态](docs/task-breakdown.md)
+- [OS 与分布式系统知识点](docs/os-knowledge.md)
+- [参数优化报告](docs/param-optimization-report.md)
+- [RPC 双机实验报告](docs/rpc-experiment-report.md)
+- [Ray 基础实验报告](docs/ray-experiment-report.md)
+- [Ray 加分实验报告](docs/ray-bonus-report.md)
+- [并发压力测试报告](docs/concurrency-stress-report.md)
+- [输出质量评估](reports/quality-evaluation.md)
+- [单机冒烟记录](reports/smoke.md)
+
+原始 JSONL 和汇总 JSON 位于 `data/results/`。仓库不提供 Makefile；本项目入口使用
+Cargo、CMake、uv 和普通 shell 命令。
