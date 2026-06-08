@@ -1,4 +1,4 @@
-# Lab4 Ray 选做：并发压力测试报告
+# Lab4 llama.cpp 选做：llama-server 轻量并发请求测试报告
 
 ## 1. 实验目的
 
