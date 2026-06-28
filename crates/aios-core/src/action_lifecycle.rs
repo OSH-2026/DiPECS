@@ -89,7 +89,7 @@ impl<'a> ActionLifecycle<'a> {
                     proposed_at_ms: authorized_at_ms,
                 };
 
-                let mut record = AuditRecord::new(&proposal, route);
+                let mut record = AuditRecord::new(&proposal, route, ctx.summary.source_tier);
 
                 // Schema validation
                 if let Some(err) = validate_schema(&proposal, &intent.risk_level) {

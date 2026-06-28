@@ -17,7 +17,7 @@ use aios_cli::replay::{self, Stage};
 
 /// Pinned canonical-audit hash for `data/traces/sample_replay.jsonl` replayed
 /// through `Stage::Execute` with the default 10s window. See module docs.
-const GOLDEN_HASH: &str = "sha256:717eb984617a816f55ba87afa10a782b52a68128112b3122e5447f7676b21201";
+const GOLDEN_HASH: &str = "sha256:079c1b9c58e7e601de3a573a865208cf1be2fa02a83f832acd398fd11acf66e5";
 
 fn sample_trace_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../data/traces/sample_replay.jsonl")

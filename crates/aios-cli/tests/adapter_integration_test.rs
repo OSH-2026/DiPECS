@@ -10,10 +10,10 @@ use aios_core::policy_engine::PolicyEngine;
 use aios_spec::context::ContextSummary;
 use aios_spec::governance::ActionState;
 use aios_spec::intent::{
-    ActionType, ActionUrgency, CapabilityLevel, Intent, IntentBatch, IntentType, RiskLevel,
-    SuggestedAction,
+    ActionType, ActionUrgency, CapabilityLevel, DecisionRoute, Intent, IntentBatch, IntentType,
+    RiskLevel, SuggestedAction,
 };
-use aios_spec::{DecisionRoute, SourceTier, StructuredContext};
+use aios_spec::{SourceTier, StructuredContext};
 
 fn noop_intent() -> Intent {
     Intent {
