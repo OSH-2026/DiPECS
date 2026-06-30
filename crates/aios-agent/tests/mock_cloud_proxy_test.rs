@@ -1,6 +1,6 @@
 //! 验证 DecisionRouter 的意图生成与路由逻辑
 
-use aios_agent::{DecisionRouter, RouterConfig};
+use aios_agent::{DecisionBackend, DecisionRouter, LocalEvaluatorBackend, RouterConfig};
 use aios_core::action_lifecycle::ActionLifecycle;
 use aios_core::policy_engine::PolicyEngine;
 use aios_spec::*;
@@ -303,6 +303,42 @@ fn test_file_activity_not_actioned_under_rule_based() {
 }
 
 // ===== 屏幕亮起检测 =====
+
+#[test]
+fn test_local_evaluator_generates_prefetch_intent_without_cloud() {
+    let events = vec![make_file_activity(ExtensionCategory::Document)];
+    let ctx = make_context(events, make_summary());
+
+    let result = LocalEvaluatorBackend.evaluate(&ctx);
+    assert!(matches!(result.route, DecisionRoute::LocalEvaluator));
+    assert_eq!(result.intent_batch.model, "local-evaluator-v0.1");
+    assert!(result.error.is_none());
+
+    let handle = result
+        .intent_batch
+        .intents
+        .iter()
+        .find(|intent| {
+            matches!(
+                intent.intent_type,
+                IntentType::HandleFile(ExtensionCategory::Document)
+            )
+        })
+        .expect("local evaluator should produce a HandleFile intent");
+
+    assert!(handle.confidence >= 0.78);
+    assert!(handle
+        .rationale_tags
+        .iter()
+        .any(|tag| tag == "local:file_activity"));
+    assert!(handle.suggested_actions.iter().any(|action| {
+        matches!(action.action_type, ActionType::PrefetchFile)
+            && action
+                .target
+                .as_deref()
+                .is_some_and(|target| target.starts_with("url:"))
+    }));
+}
 
 #[test]
 fn test_screen_on_triggers_keepalive() {
