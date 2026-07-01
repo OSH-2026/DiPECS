@@ -1,65 +1,100 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
-
   <defs>
-    <marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L9,3.5 L0,7 Z" fill="#2563eb"/>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/>
     </marker>
-    <marker id="arrow-muted" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L9,3.5 L0,7 Z" fill="#94a3b8"/>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#94a3b8"/>
     </marker>
     <style><![CDATA[
       text { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .title { font-size: 22px; font-weight: 800; fill: #0f172a; }
-      .label { font-size: 13px; font-weight: 750; }
-      .small { font-size: 11px; }
-      .tiny { font-size: 10px; }
-      .muted { fill: #64748b; }
-      .box { stroke-width: 1.2; }
-      .soft { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.1; }
-      .lane-title { font-size: 13px; font-weight: 800; fill: #334155; }
+      .title { font-size: 23px; font-weight: 850; fill: #0f172a; }
+      .name { font-size: 13px; font-weight: 850; }
+      .desc { font-size: 11px; font-weight: 620; }
+      .tiny { font-size: 10px; font-weight: 620; }
+      .box { stroke-width: 1.35; }
     ]]></style>
   </defs>
 
-  <rect width="960" height="540" rx="16" fill="#f8fafc" stroke="#dbeafe" stroke-width="1.4"/>
-  <text x="480" y="34" text-anchor="middle" class="title">DecisionRouter：分级路由与熔断</text>
-  <rect x="52" y="112" width="160" height="62" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
-  <text x="132.0" y="136" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">StructuredContext</text>
-  <text x="132.0" y="157" text-anchor="middle" font-size="11" fill="#1e40af">窗口摘要</text>
-  <text x="132.0" y="172" text-anchor="middle" font-size="11" fill="#1e40af">来源层级 / 语义提示</text>
-  <line x1="212" y1="143" x2="262" y2="143" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="262" y="92" width="170" height="102" rx="10" fill="#ede9fe" stroke="#c4b5fd" class="box" />
-  <text x="347.0" y="116" text-anchor="middle" font-size="12" fill="#5b21b6" font-weight="800">Router Gate</text>
-  <text x="347.0" y="137" text-anchor="middle" font-size="11" fill="#5b21b6">1 熔断状态</text>
-  <text x="347.0" y="152" text-anchor="middle" font-size="11" fill="#5b21b6">2 隐私敏感度</text>
-  <text x="347.0" y="167" text-anchor="middle" font-size="11" fill="#5b21b6">3 本地可动作信号</text>
-  <text x="347.0" y="182" text-anchor="middle" font-size="11" fill="#5b21b6">4 语义复杂度</text>
-  <line x1="432" y1="143" x2="478" y2="143" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="478" y="70" width="420" height="224" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
-  <text x="496" y="94" text-anchor="start" font-size="13" fill="#334155" font-weight="800">路由目标</text>
-  <rect x="512" y="106" width="138" height="48" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
-  <text x="581.0" y="130" text-anchor="middle" font-size="12" fill="#166534" font-weight="800">RuleBackend</text>
-  <text x="581.0" y="151" text-anchor="middle" font-size="11" fill="#166534">确定信号命中</text>
-  <rect x="714" y="106" width="138" height="48" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
-  <text x="783.0" y="130" text-anchor="middle" font-size="12" fill="#166534" font-weight="800">LocalEvaluator</text>
-  <text x="783.0" y="151" text-anchor="middle" font-size="11" fill="#166534">可解释评分</text>
-  <rect x="512" y="184" width="138" height="48" rx="10" fill="#fef3c7" stroke="#fbbf24" class="box" />
-  <text x="581.0" y="208" text-anchor="middle" font-size="12" fill="#92400e" font-weight="800">CloudLLM</text>
-  <text x="581.0" y="229" text-anchor="middle" font-size="11" fill="#92400e">复杂语义，可选</text>
-  <rect x="714" y="184" width="138" height="48" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box" />
-  <text x="783.0" y="208" text-anchor="middle" font-size="12" fill="#9f1239" font-weight="800">FallbackNoOp</text>
-  <text x="783.0" y="229" text-anchor="middle" font-size="11" fill="#9f1239">熔断 / 不确定</text>
-  <path d="M648,194 L648,272 L420,272 L420,314" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <path d="M783,232 L783,272 L420,272 L420,314" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <path d="M581,154 L581,272 L420,272 L420,314" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <path d="M783,154 L783,272 L420,272 L420,314" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <rect x="300" y="314" width="240" height="58" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
-  <text x="420.0" y="338" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">DecisionBackendResult</text>
-  <text x="420.0" y="359" text-anchor="middle" font-size="11" fill="#1e40af">最多 5 个 intent；分数裁剪到 [0,1]</text>
-  <line x1="540" y1="343" x2="600" y2="343" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="600" y="314" width="230" height="58" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
-  <text x="715.0" y="338" text-anchor="middle" font-size="12" fill="#166534" font-weight="800">IntentBatch</text>
-  <text x="715.0" y="359" text-anchor="middle" font-size="11" fill="#166534">进入 PolicyEngine；成功后错误计数清零</text>
-  <rect x="72" y="410" width="816" height="58" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
-  <text x="90" y="434" text-anchor="start" font-size="13" fill="#334155" font-weight="800">熔断规则</text>
-  <text x="96" y="445" text-anchor="start" font-size="13" fill="#9f1239" font-weight="800">连续错误按时间窗口计数；熔断时直接走 FallbackNoOp，避免云端或执行侧继续放大故障</text>
+  <rect width="960" height="540" rx="18" fill="#f8fafc" stroke="#dbeafe" stroke-width="1.5"/>
+  <text x="480" y="42" text-anchor="middle" class="title">DecisionRouter：分级路由与熔断</text>
+
+  <!-- Input -->
+  <rect x="52" y="96" width="170" height="82" rx="14" fill="#dbeafe" stroke="#93c5fd" class="box"/>
+  <text x="137" y="124" text-anchor="middle" class="name" fill="#1e40af">StructuredContext</text>
+  <text x="137" y="148" text-anchor="middle" class="desc" fill="#1e40af">窗口摘要 / 来源层级</text>
+  <text x="137" y="166" text-anchor="middle" class="tiny" fill="#1e40af">语义提示 + 近期反馈</text>
+
+  <line x1="222" y1="137" x2="282" y2="137" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- Priority gates -->
+  <rect x="282" y="82" width="250" height="72" rx="14" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="407" y="108" text-anchor="middle" class="name" fill="#9f1239">1. 熔断状态</text>
+  <text x="407" y="130" text-anchor="middle" class="desc" fill="#9f1239">连续错误超过窗口阈值？</text>
+  <text x="407" y="148" text-anchor="middle" class="tiny" fill="#9f1239">是：直接 FallbackNoOp</text>
+
+  <line x1="407" y1="154" x2="407" y2="186" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="421" y="174" class="tiny" fill="#64748b">否</text>
+
+  <rect x="282" y="186" width="250" height="72" rx="14" fill="#fef3c7" stroke="#fbbf24" class="box"/>
+  <text x="407" y="212" text-anchor="middle" class="name" fill="#92400e">2. 隐私敏感度</text>
+  <text x="407" y="234" text-anchor="middle" class="desc" fill="#92400e">验证码 / 金融语义过多？</text>
+  <text x="407" y="252" text-anchor="middle" class="tiny" fill="#92400e">是：禁用云端路径，继续本地路由</text>
+
+  <line x1="407" y1="258" x2="407" y2="290" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <rect x="282" y="290" width="250" height="72" rx="14" fill="#ecfeff" stroke="#67e8f9" class="box"/>
+  <text x="407" y="316" text-anchor="middle" class="name" fill="#0e7490">3. 本地可动作信号</text>
+  <text x="407" y="338" text-anchor="middle" class="desc" fill="#0e7490">文件访问 / 低电量 / 屏幕交互？</text>
+  <text x="407" y="356" text-anchor="middle" class="tiny" fill="#0e7490">是：优先本地可解释评分</text>
+
+  <line x1="407" y1="362" x2="407" y2="394" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="421" y="382" class="tiny" fill="#64748b">否</text>
+
+  <rect x="282" y="394" width="250" height="72" rx="14" fill="#ede9fe" stroke="#c4b5fd" class="box"/>
+  <text x="407" y="420" text-anchor="middle" class="name" fill="#5b21b6">4. 语义复杂度</text>
+  <text x="407" y="442" text-anchor="middle" class="desc" fill="#5b21b6">简单规则 / 复杂语义 / 后端失败</text>
+  <text x="407" y="460" text-anchor="middle" class="tiny" fill="#5b21b6">最后才考虑可选 CloudLLM</text>
+
+  <!-- Backend choices -->
+  <rect x="650" y="82" width="210" height="58" rx="12" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="755" y="106" text-anchor="middle" class="name" fill="#9f1239">FallbackNoOp</text>
+  <text x="755" y="126" text-anchor="middle" class="desc" fill="#9f1239">熔断 / 不确定 / 失败降级</text>
+  <path d="M532,118 L650,118" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="575" y="108" class="tiny" fill="#9f1239">tripped</text>
+
+  <rect x="650" y="186" width="210" height="58" rx="12" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="755" y="210" text-anchor="middle" class="name" fill="#166534">RuleBackend</text>
+  <text x="755" y="230" text-anchor="middle" class="desc" fill="#166534">确定规则命中 / 云端禁用兜底</text>
+  <path d="M532,430 L590,430 L590,215 L650,215" fill="none" stroke="#94a3b8" stroke-width="2.2" marker-end="url(#arrow-gray)"/>
+  <text x="545" y="420" class="tiny" fill="#64748b">简单</text>
+
+  <rect x="650" y="290" width="210" height="58" rx="12" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="755" y="314" text-anchor="middle" class="name" fill="#166534">LocalEvaluator</text>
+  <text x="755" y="334" text-anchor="middle" class="desc" fill="#166534">本地信号可解释评分</text>
+  <path d="M532,326 L650,326" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="568" y="316" class="tiny" fill="#0e7490">yes</text>
+
+  <rect x="650" y="394" width="210" height="58" rx="12" fill="#fef3c7" stroke="#fbbf24" class="box"/>
+  <text x="755" y="418" text-anchor="middle" class="name" fill="#92400e">CloudLLM</text>
+  <text x="755" y="438" text-anchor="middle" class="desc" fill="#92400e">复杂语义；可选；非 TCB</text>
+  <path d="M532,430 L650,430" fill="none" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="568" y="420" class="tiny" fill="#92400e">复杂且允许云端</text>
+
+  <!-- Output bus -->
+  <path d="M860,111 L900,111 L900,486 L560,486" fill="none" stroke="#94a3b8" stroke-width="2.1" stroke-dasharray="6 6" marker-end="url(#arrow-gray)"/>
+  <path d="M860,215 L900,215" fill="none" stroke="#94a3b8" stroke-width="2.1" stroke-dasharray="6 6"/>
+  <path d="M860,319 L900,319" fill="none" stroke="#94a3b8" stroke-width="2.1" stroke-dasharray="6 6"/>
+  <path d="M860,423 L900,423" fill="none" stroke="#94a3b8" stroke-width="2.1" stroke-dasharray="6 6"/>
+
+  <rect x="272" y="486" width="288" height="38" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box"/>
+  <text x="416" y="510" text-anchor="middle" class="desc" fill="#1e40af">DecisionBackendResult：最多 5 个 intent，分数裁剪到 [0,1]</text>
+
+  <line x1="560" y1="505" x2="630" y2="505" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <rect x="630" y="486" width="230" height="38" rx="10" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="745" y="510" text-anchor="middle" class="desc" fill="#166534">IntentBatch → PolicyEngine；成功后错误计数清零</text>
+
+  <!-- Note -->
+  <rect x="64" y="486" width="180" height="38" rx="10" fill="#fff7ed" stroke="#fdba74" class="box"/>
+  <text x="154" y="510" text-anchor="middle" class="tiny" fill="#9a3412">Privacy gate 不产生动作，只限制后端选择</text>
 </svg>

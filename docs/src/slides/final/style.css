@@ -217,3 +217,10 @@
   line-height: 1.35;
   opacity: 0.75;
 }
+
+/* Hide Slidev's Goto popup during presentation.
+   It is triggered by pressing `g` or clicking the page number, and can look like
+   an unwanted right-side table of contents in fullscreen mode. */
+#slidev-goto-dialog {
+  display: none !important;
+}

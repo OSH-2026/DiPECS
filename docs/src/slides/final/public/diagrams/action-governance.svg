@@ -1,82 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
-
   <defs>
-    <marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L9,3.5 L0,7 Z" fill="#2563eb"/>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#2563eb"/>
     </marker>
-    <marker id="arrow-muted" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0,0 L9,3.5 L0,7 Z" fill="#94a3b8"/>
+    <marker id="arrow-green" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#e11d48"/>
     </marker>
     <style><![CDATA[
       text { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .title { font-size: 22px; font-weight: 800; fill: #0f172a; }
-      .label { font-size: 13px; font-weight: 750; }
-      .small { font-size: 11px; }
-      .tiny { font-size: 10px; }
-      .muted { fill: #64748b; }
-      .box { stroke-width: 1.2; }
-      .soft { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.1; }
-      .lane-title { font-size: 13px; font-weight: 800; fill: #334155; }
+      .title { font-size: 23px; font-weight: 850; fill: #0f172a; }
+      .name { font-size: 13px; font-weight: 850; }
+      .desc { font-size: 11px; font-weight: 620; }
+      .tiny { font-size: 10px; font-weight: 620; }
+      .box { stroke-width: 1.35; }
     ]]></style>
   </defs>
 
-  <rect width="960" height="540" rx="16" fill="#f8fafc" stroke="#dbeafe" stroke-width="1.4"/>
-  <text x="480" y="34" text-anchor="middle" class="title">动作治理链路：从建议到授权执行</text>
-  <rect x="58" y="82" width="150" height="54" rx="10" fill="#cffafe" stroke="#67e8f9" class="box" />
-  <text x="133.0" y="106" text-anchor="middle" font-size="12" fill="#0e7490" font-weight="800">IntentBatch</text>
-  <text x="133.0" y="127" text-anchor="middle" font-size="11" fill="#0e7490">来自决策路由器</text>
-  <line x1="208" y1="109" x2="244" y2="109" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="244" y="82" width="150" height="54" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
-  <text x="319.0" y="106" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">SuggestedAction</text>
-  <text x="319.0" y="127" text-anchor="middle" font-size="11" fill="#1e40af">类型 / 目标 / 紧急度</text>
-  <line x1="394" y1="109" x2="430" y2="109" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="430" y="82" width="150" height="54" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
-  <text x="505.0" y="106" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">ActionProposal</text>
-  <text x="505.0" y="127" text-anchor="middle" font-size="11" fill="#1e40af">坐标 / 效果类别</text>
-  <line x1="580" y1="109" x2="616" y2="109" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="616" y="82" width="250" height="54" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box" />
-  <text x="741.0" y="106" text-anchor="middle" font-size="12" fill="#9f1239" font-weight="800">PolicyEngine</text>
-  <text x="741.0" y="127" text-anchor="middle" font-size="11" fill="#9f1239">8 项检查；通过才授权；拒绝也记录</text>
-  <rect x="72" y="178" width="816" height="72" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
-  <text x="90" y="202" text-anchor="start" font-size="13" fill="#334155" font-weight="800">策略检查摘要</text>
-  <rect x="94" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="137.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">1 能力</text>
-  <rect x="192" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="235.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">2 配置</text>
-  <rect x="290" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="333.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">3 置信</text>
-  <rect x="388" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="431.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">4 数量</text>
-  <rect x="486" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="529.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">5 阻止</text>
-  <rect x="584" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="627.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">6 延迟</text>
-  <rect x="682" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="725.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">7 动作</text>
-  <rect x="780" y="210" width="86" height="28" rx="7" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
-  <text x="823.0" y="229" text-anchor="middle" font-size="11" fill="#334155" font-weight="700">8 目标</text>
-  <path d="M741,136 L741,282 L332,282" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <path d="M741,136 L741,282 L628,282" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <rect x="220" y="282" width="224" height="64" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
-  <text x="332.0" y="306" text-anchor="middle" font-size="13" fill="#166534" font-weight="800">策略通过</text>
-  <text x="332.0" y="327" text-anchor="middle" font-size="11" fill="#166534">seal() -&gt; AuthorizedAction</text>
-  <text x="332.0" y="342" text-anchor="middle" font-size="11" fill="#166534">只有 lifecycle 可构造</text>
-  <rect x="516" y="282" width="224" height="64" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box" />
-  <text x="628.0" y="306" text-anchor="middle" font-size="13" fill="#9f1239" font-weight="800">策略拒绝</text>
-  <text x="628.0" y="327" text-anchor="middle" font-size="11" fill="#9f1239">产出 DenialReason</text>
-  <text x="628.0" y="342" text-anchor="middle" font-size="11" fill="#9f1239">不执行动作</text>
-  <line x1="332" y1="346" x2="332" y2="392" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="220" y="392" width="224" height="52" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
-  <text x="332.0" y="416" text-anchor="middle" font-size="12" fill="#166534" font-weight="800">ActionAdapter</text>
-  <text x="332.0" y="437" text-anchor="middle" font-size="11" fill="#166534">离线 / 默认 / Android</text>
-  <text x="332.0" y="452" text-anchor="middle" font-size="11" fill="#166534">设备侧回执</text>
-  <path d="M628,346 L628,418 L492,418" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <line x1="444" y1="418" x2="492" y2="418" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow-muted)"/>
-  <rect x="492" y="392" width="248" height="52" rx="10" fill="#ede9fe" stroke="#c4b5fd" class="box" />
-  <text x="616.0" y="416" text-anchor="middle" font-size="12" fill="#5b21b6" font-weight="800">AuditRecord</text>
-  <text x="616.0" y="437" text-anchor="middle" font-size="11" fill="#5b21b6">坐标、状态迁移、终态、结果、拒绝原因</text>
-  <line x1="332" y1="444" x2="332" y2="476" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <line x1="616" y1="444" x2="616" y2="476" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="300" y="476" width="360" height="36" rx="10" fill="#ede9fe" stroke="#c4b5fd" class="box" />
-  <text x="480.0" y="500" text-anchor="middle" font-size="12" fill="#5b21b6" font-weight="800">统一审计流：允许与拒绝都可回放、可哈希、可比较</text>
+  <rect width="960" height="540" rx="18" fill="#f8fafc" stroke="#dbeafe" stroke-width="1.5"/>
+  <text x="480" y="42" text-anchor="middle" class="title">案例裁决：允许与拒绝</text>
+
+  <!-- Proposal chain -->
+  <rect x="82" y="92" width="150" height="56" rx="12" fill="#cffafe" stroke="#67e8f9" class="box"/>
+  <text x="157" y="116" text-anchor="middle" class="name" fill="#0e7490">IntentBatch</text>
+  <text x="157" y="136" text-anchor="middle" class="desc" fill="#0e7490">后端候选建议</text>
+  <line x1="232" y1="120" x2="280" y2="120" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <rect x="280" y="92" width="170" height="56" rx="12" fill="#dbeafe" stroke="#93c5fd" class="box"/>
+  <text x="365" y="116" text-anchor="middle" class="name" fill="#1e40af">ActionProposal</text>
+  <text x="365" y="136" text-anchor="middle" class="desc" fill="#1e40af">目标 / 风险 / 置信度</text>
+  <line x1="450" y1="120" x2="498" y2="120" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <rect x="498" y="92" width="380" height="56" rx="12" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="688" y="116" text-anchor="middle" class="name" fill="#9f1239">PolicyEngine</text>
+  <text x="688" y="136" text-anchor="middle" class="desc" fill="#9f1239">8 项检查：能力、风险、置信、数量、阻止、延迟、动作、目标</text>
+
+  <!-- Two cases -->
+  <rect x="70" y="210" width="390" height="202" rx="16" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="265" y="240" text-anchor="middle" class="name" fill="#166534">允许案例：上下文支持目标</text>
+  <rect x="104" y="268" width="136" height="48" rx="10" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="172" y="288" text-anchor="middle" class="desc" fill="#166534">目标在窗口中</text>
+  <text x="172" y="306" text-anchor="middle" class="tiny" fill="#166534">pkg / url / cache prefix</text>
+  <line x1="240" y1="292" x2="284" y2="292" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <rect x="284" y="268" width="136" height="48" rx="10" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="352" y="288" text-anchor="middle" class="desc" fill="#166534">全部检查通过</text>
+  <text x="352" y="306" text-anchor="middle" class="tiny" fill="#166534">confidence / risk OK</text>
+  <line x1="352" y1="316" x2="352" y2="342" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <rect x="194" y="342" width="142" height="48" rx="10" fill="#dcfce7" stroke="#86efac" class="box"/>
+  <text x="265" y="362" text-anchor="middle" class="desc" fill="#166534">Approved</text>
+  <text x="265" y="380" text-anchor="middle" class="tiny" fill="#166534">seal → AuthorizedAction</text>
+
+  <rect x="500" y="210" width="390" height="202" rx="16" fill="#ffffff" stroke="#fecdd3" stroke-width="1.5"/>
+  <text x="695" y="240" text-anchor="middle" class="name" fill="#9f1239">拒绝案例：高置信度也不能越界</text>
+  <rect x="534" y="268" width="136" height="48" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="602" y="288" text-anchor="middle" class="desc" fill="#9f1239">目标不在窗口</text>
+  <text x="602" y="306" text-anchor="middle" class="tiny" fill="#9f1239">context mismatch</text>
+  <line x1="670" y1="292" x2="714" y2="292" stroke="#e11d48" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+  <rect x="714" y="268" width="136" height="48" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="782" y="288" text-anchor="middle" class="desc" fill="#9f1239">任一检查失败</text>
+  <text x="782" y="306" text-anchor="middle" class="tiny" fill="#9f1239">fail closed</text>
+  <line x1="782" y1="316" x2="782" y2="342" stroke="#e11d48" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+  <rect x="624" y="342" width="142" height="48" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box"/>
+  <text x="695" y="362" text-anchor="middle" class="desc" fill="#9f1239">Denied</text>
+  <text x="695" y="380" text-anchor="middle" class="tiny" fill="#9f1239">DenialReason / 不执行</text>
+
+  <!-- Audit -->
+  <line x1="265" y1="390" x2="265" y2="450" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <line x1="695" y1="390" x2="695" y2="450" stroke="#2563eb" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <rect x="250" y="450" width="460" height="46" rx="12" fill="#ede9fe" stroke="#c4b5fd" class="box"/>
+  <text x="480" y="470" text-anchor="middle" class="name" fill="#5b21b6">同一审计流</text>
+  <text x="480" y="488" text-anchor="middle" class="desc" fill="#5b21b6">Approved 和 Denied 都可回放、可哈希、可比较；Policy 独立于模型</text>
 </svg>
