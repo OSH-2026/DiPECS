@@ -1,116 +1,92 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" font-family="system-ui, -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#0284c7"/>
+    <marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#2563eb"/>
     </marker>
+    <marker id="arrow-muted" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3.5 L0,7 Z" fill="#94a3b8"/>
+    </marker>
+    <style><![CDATA[
+      text { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .title { font-size: 22px; font-weight: 800; fill: #0f172a; }
+      .label { font-size: 13px; font-weight: 750; }
+      .small { font-size: 11px; }
+      .tiny { font-size: 10px; }
+      .muted { fill: #64748b; }
+      .box { stroke-width: 1.2; }
+      .soft { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.1; }
+      .lane-title { font-size: 13px; font-weight: 800; fill: #334155; }
+    ]]></style>
   </defs>
 
-  <rect width="900" height="340" rx="12" fill="#f8fafc" stroke="#bae6fd" stroke-width="1.5"/>
-
-  <!-- Left: Android device -->
-  <rect x="20" y="20" width="180" height="300" rx="10" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5"/>
-  <text x="110" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">Android 设备</text>
-
-  <!-- actions.jsonl file -->
-  <rect x="38" y="62" width="144" height="50" rx="6" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
-  <text x="110" y="83" text-anchor="middle" font-size="11" font-weight="600" fill="#854d0e">actions.jsonl</text>
-  <text x="110" y="100" text-anchor="middle" font-size="9" fill="#a16207">仅追加 · app 私有目录</text>
-
-  <line x1="110" y1="112" x2="110" y2="132" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- Android Collector process -->
-  <rect x="38" y="138" width="144" height="60" rx="6" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1"/>
-  <text x="110" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#075985">Android 采集器</text>
-  <text x="110" y="174" text-anchor="middle" font-size="8.5" fill="#0e7490">UsageStatsManager</text>
-  <text x="110" y="188" text-anchor="middle" font-size="8.5" fill="#0e7490">通知Listener</text>
-
-  <!-- Data sources list -->
-  <rect x="38" y="210" width="144" height="95" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-  <text x="110" y="228" text-anchor="middle" font-size="9" font-weight="600" fill="#64748b">数据源</text>
-  <text x="52" y="246" font-size="8.5" fill="#475569">• 前台应用变化</text>
-  <text x="52" y="262" font-size="8.5" fill="#475569">• 通知发布/交互</text>
-  <text x="52" y="278" font-size="8.5" fill="#475569">• 电量/网络/屏幕</text>
-
-  <!-- Arrow from device to Rust -->
-  <line x1="200" y1="110" x2="245" y2="110" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="222" y="102" text-anchor="middle" font-size="8" fill="#0e7490">追踪</text>
-
-  <!-- Center: Rust side -->
-  <rect x="255" y="20" width="400" height="300" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
-  <text x="455" y="48" text-anchor="middle" font-size="13" font-weight="700" fill="#0369a1">Rust 入口层</text>
-
-  <!-- AndroidJsonlTailer -->
-  <rect x="275" y="62" width="165" height="54" rx="6" fill="#dbeafe" stroke="#93c5fd" stroke-width="1"/>
-  <text x="357" y="83" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">Android JSONL 追踪器</text>
-  <text x="357" y="99" text-anchor="middle" font-size="8.5" fill="#1d4ed8">轮询 JSONL，维护 offset</text>
-  <text x="357" y="112" text-anchor="middle" font-size="8.5" fill="#1d4ed8">处理截断/轮转/半行</text>
-
-  <line x1="357" y1="116" x2="357" y2="140" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- CollectorEnvelope -->
-  <rect x="275" y="145" width="165" height="40" rx="6" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
-  <text x="357" y="163" text-anchor="middle" font-size="10" font-weight="700" fill="#854d0e">采集信封</text>
-  <text x="357" y="179" text-anchor="middle" font-size="8.5" fill="#a16207">模式版本 + 来源层级 + 原始事件</text>
-
-  <line x1="357" y1="185" x2="357" y2="208" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- RustCollectorIngress -->
-  <rect x="275" y="213" width="165" height="54" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.2"/>
-  <text x="357" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">Rust 采集入口</text>
-  <text x="357" y="250" text-anchor="middle" font-size="8.5" fill="#1d4ed8">.accept(CollectorEnvelope)</text>
-  <text x="357" y="263" text-anchor="middle" font-size="8.5" fill="#1d4ed8">→ IngestedRawEvent</text>
-
-  <!-- Daemon-side collectors (right side of center) -->
-  <rect x="465" y="62" width="170" height="54" rx="6" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="1"/>
-  <text x="550" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#075985">守护进程 侧采集器</text>
-  <text x="550" y="98" text-anchor="middle" font-size="8.5" fill="#0e7490">进程读取器 / Binder 探针</text>
-  <text x="550" y="112" text-anchor="middle" font-size="8.5" fill="#0e7490">系统状态采集器</text>
-
-  <line x1="550" y1="116" x2="550" y2="140" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- accept_internal -->
-  <rect x="465" y="145" width="170" height="40" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-  <text x="550" y="163" text-anchor="middle" font-size="10" font-weight="700" fill="#166534">Rust 采集入口</text>
-  <text x="550" y="179" text-anchor="middle" font-size="8.5" fill="#15803d">.accept_internal(RawEvent)</text>
-
-  <line x1="550" y1="185" x2="550" y2="208" stroke="#0284c7" stroke-width="1.5" marker-end="url(#arrow)"/>
-
-  <!-- SourceTier labels -->
-  <rect x="465" y="213" width="80" height="28" rx="4" fill="#dbeafe" stroke="#93c5fd" stroke-width="0.8"/>
-  <text x="505" y="231" text-anchor="middle" font-size="9" font-weight="600" fill="#1e40af">公开接口</text>
-
-  <rect x="555" y="213" width="80" height="28" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="0.8"/>
-  <text x="595" y="231" text-anchor="middle" font-size="9" font-weight="600" fill="#166534">守护进程</text>
-
-  <!-- Merge point -->
-  <rect x="465" y="255" width="170" height="30" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
-  <text x="550" y="274" text-anchor="middle" font-size="10" font-weight="700" fill="#5b21b6">合并 → 动作总线</text>
-
-  <!-- Right: Into core -->
-  <line x1="655" y1="110" x2="710" y2="110" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)"/>
-
-  <rect x="720" y="30" width="160" height="280" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
-  <text x="800" y="56" text-anchor="middle" font-size="12" font-weight="700" fill="#991b1b">aios-core</text>
-
-  <rect x="735" y="72" width="130" height="36" rx="5" fill="#fff" stroke="#fca5a5" stroke-width="1"/>
-  <text x="800" y="95" text-anchor="middle" font-size="10" font-weight="600" fill="#991b1b">隐私气隙</text>
-
-  <line x1="800" y1="108" x2="800" y2="128" stroke="#b91c1c" stroke-width="1.2" marker-end="url(#arrow)"/>
-
-  <rect x="735" y="133" width="130" height="36" rx="5" fill="#fff" stroke="#fca5a5" stroke-width="1"/>
-  <text x="800" y="156" text-anchor="middle" font-size="10" font-weight="600" fill="#991b1b">窗口聚合器</text>
-
-  <line x1="800" y1="169" x2="800" y2="190" stroke="#b91c1c" stroke-width="1.2" marker-end="url(#arrow)"/>
-
-  <rect x="735" y="195" width="130" height="36" rx="5" fill="#fff" stroke="#fca5a5" stroke-width="1"/>
-  <text x="800" y="218" text-anchor="middle" font-size="10" font-weight="600" fill="#991b1b">决策路由器</text>
-
-  <line x1="800" y1="231" x2="800" y2="252" stroke="#b91c1c" stroke-width="1.2" marker-end="url(#arrow)"/>
-
-  <rect x="735" y="257" width="130" height="40" rx="5" fill="#fff" stroke="#fca5a5" stroke-width="1"/>
-  <text x="800" y="276" text-anchor="middle" font-size="10" font-weight="600" fill="#991b1b">策略 + 生命周期</text>
-  <text x="800" y="290" text-anchor="middle" font-size="8.5" fill="#b91c1c">→ 审计记录</text>
-
-  <!-- Privacy label -->
-  <text x="800" y="322" text-anchor="middle" font-size="9" font-weight="600" fill="#991b1b">原始事件不越过此边界</text>
+  <rect width="960" height="540" rx="16" fill="#f8fafc" stroke="#dbeafe" stroke-width="1.4"/>
+  <text x="480" y="34" text-anchor="middle" class="title">Append-only JSONL 与 Rust 增量摄入</text>
+  <rect x="42" y="70" width="210" height="374" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="60" y="94" text-anchor="start" font-size="13" fill="#334155" font-weight="800">Android App 进程</text>
+  <rect x="70" y="116" width="154" height="52" rx="10" fill="#fef3c7" stroke="#fbbf24" class="box" />
+  <text x="147.0" y="140" text-anchor="middle" font-size="12" fill="#92400e" font-weight="800">actions.jsonl</text>
+  <text x="147.0" y="161" text-anchor="middle" font-size="11" fill="#92400e">仅追加</text>
+  <text x="147.0" y="176" text-anchor="middle" font-size="11" fill="#92400e">app 私有目录</text>
+  <line x1="147" y1="168" x2="147" y2="200" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="70" y="200" width="154" height="58" rx="10" fill="#cffafe" stroke="#67e8f9" class="box" />
+  <text x="147.0" y="224" text-anchor="middle" font-size="12" fill="#0e7490" font-weight="800">Android 采集器</text>
+  <text x="147.0" y="245" text-anchor="middle" font-size="11" fill="#0e7490">UsageStatsManager</text>
+  <text x="147.0" y="260" text-anchor="middle" font-size="11" fill="#0e7490">NotificationListener</text>
+  <rect x="70" y="292" width="154" height="98" rx="10" fill="#f1f5f9" stroke="#cbd5e1" class="box" />
+  <text x="147.0" y="316" text-anchor="middle" font-size="12" fill="#334155" font-weight="800">事件来源</text>
+  <text x="147.0" y="337" text-anchor="middle" font-size="11" fill="#334155">前台应用变化</text>
+  <text x="147.0" y="352" text-anchor="middle" font-size="11" fill="#334155">通知发布 / 交互</text>
+  <text x="147.0" y="367" text-anchor="middle" font-size="11" fill="#334155">电量 / 网络 / 屏幕</text>
+  <rect x="294" y="70" width="362" height="374" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="312" y="94" text-anchor="start" font-size="13" fill="#334155" font-weight="800">Rust 入口层</text>
+  <rect x="326" y="114" width="156" height="58" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
+  <text x="404.0" y="138" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">JSONL Tailer</text>
+  <text x="404.0" y="159" text-anchor="middle" font-size="11" fill="#1e40af">offset 持久化</text>
+  <text x="404.0" y="174" text-anchor="middle" font-size="11" fill="#1e40af">截断 / 轮转 / 半行</text>
+  <line x1="482" y1="143" x2="514" y2="143" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="514" y="114" width="110" height="58" rx="10" fill="#fef3c7" stroke="#fbbf24" class="box" />
+  <text x="569.0" y="138" text-anchor="middle" font-size="12" fill="#92400e" font-weight="800">Envelope</text>
+  <text x="569.0" y="159" text-anchor="middle" font-size="11" fill="#92400e">schema</text>
+  <text x="569.0" y="174" text-anchor="middle" font-size="11" fill="#92400e">source tier</text>
+  <line x1="569" y1="172" x2="569" y2="214" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="390" y="214" width="178" height="54" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
+  <text x="479.0" y="238" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">accept(envelope)</text>
+  <text x="479.0" y="259" text-anchor="middle" font-size="11" fill="#1e40af">公开接口事件</text>
+  <text x="479.0" y="274" text-anchor="middle" font-size="11" fill="#1e40af">-&gt; IngestedRawEvent</text>
+  <rect x="390" y="306" width="178" height="54" rx="10" fill="#ede9fe" stroke="#c4b5fd" class="box" />
+  <text x="479.0" y="330" text-anchor="middle" font-size="12" fill="#5b21b6" font-weight="800">Action Bus</text>
+  <text x="479.0" y="351" text-anchor="middle" font-size="11" fill="#5b21b6">合并两类来源</text>
+  <text x="479.0" y="366" text-anchor="middle" font-size="11" fill="#5b21b6">统一送入核心</text>
+  <line x1="479" y1="268" x2="479" y2="306" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="326" y="388" width="118" height="34" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
+  <text x="385.0" y="412" text-anchor="middle" font-size="11" fill="#1e40af" font-weight="800">PublicApi</text>
+  <rect x="514" y="388" width="118" height="34" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
+  <text x="573.0" y="412" text-anchor="middle" font-size="11" fill="#166534" font-weight="800">Daemon</text>
+  <rect x="390" y="166" width="178" height="30" rx="10" fill="#fef3c7" stroke="#fbbf24" class="box" />
+  <text x="479.0" y="190" text-anchor="middle" font-size="11" fill="#92400e" font-weight="800">模式版本 + 来源层级</text>
+  <rect x="514" y="246" width="110" height="42" rx="10" fill="#dcfce7" stroke="#86efac" class="box" />
+  <text x="569.0" y="270" text-anchor="middle" font-size="11" fill="#166534" font-weight="800">accept_internal</text>
+  <text x="569.0" y="291" text-anchor="middle" font-size="11" fill="#166534">daemon RawEvent</text>
+  <line x1="569" y1="288" x2="569" y2="306" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="706" y="70" width="212" height="374" rx="14" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="724" y="94" text-anchor="start" font-size="13" fill="#334155" font-weight="800">aios-core 主链路</text>
+  <rect x="740" y="116" width="144" height="46" rx="10" fill="#ffe4e6" stroke="#fda4af" class="box" />
+  <text x="812.0" y="140" text-anchor="middle" font-size="12" fill="#9f1239" font-weight="800">Privacy Gap</text>
+  <text x="812.0" y="161" text-anchor="middle" font-size="11" fill="#9f1239">原始字段不可越界</text>
+  <line x1="812" y1="162" x2="812" y2="190" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="740" y="190" width="144" height="46" rx="10" fill="#cffafe" stroke="#67e8f9" class="box" />
+  <text x="812.0" y="214" text-anchor="middle" font-size="12" fill="#0e7490" font-weight="800">Window</text>
+  <text x="812.0" y="235" text-anchor="middle" font-size="11" fill="#0e7490">10s 上下文</text>
+  <line x1="812" y1="236" x2="812" y2="264" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="740" y="264" width="144" height="46" rx="10" fill="#dbeafe" stroke="#93c5fd" class="box" />
+  <text x="812.0" y="288" text-anchor="middle" font-size="12" fill="#1e40af" font-weight="800">Decision</text>
+  <text x="812.0" y="309" text-anchor="middle" font-size="11" fill="#1e40af">路由 + 策略</text>
+  <line x1="812" y1="310" x2="812" y2="338" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="740" y="338" width="144" height="46" rx="10" fill="#ede9fe" stroke="#c4b5fd" class="box" />
+  <text x="812.0" y="362" text-anchor="middle" font-size="12" fill="#5b21b6" font-weight="800">Lifecycle</text>
+  <text x="812.0" y="383" text-anchor="middle" font-size="11" fill="#5b21b6">审计终态</text>
+  <line x1="224" y1="142" x2="326" y2="142" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="568" y1="333" x2="740" y2="333" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="812" y="422" text-anchor="middle" font-size="11" fill="#9f1239" font-weight="700">RawEvent 在气隙前被脱敏；后续只消费 SanitizedEvent</text>
 </svg>
