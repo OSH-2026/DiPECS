@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This is a mirror of [114August514/DiPECS](https://github.com/114August514/DiPECS). Please contribute there.
+
 # DiPECS
 
 [![Rust](https://img.shields.io/badge/Rust-1.95.0-orange)](rust-toolchain.toml)
