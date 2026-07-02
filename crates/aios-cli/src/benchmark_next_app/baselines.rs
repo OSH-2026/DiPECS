@@ -565,6 +565,105 @@ impl NextAppPredictor for LastAppPrewarmBackend {
     }
 }
 
+/// Strong deployable baseline that ensembles existing Android-observable
+/// signals: recency, notification priority, per-app majority, and Markov.
+///
+/// This is the benchmark's primary non-DiPECS baseline. It intentionally avoids
+/// raw private text and only uses the same candidate set exposed to every
+/// predictor.
+#[derive(Default)]
+pub struct StrongPredictiveActionBackend {
+    per_current: PerCurrentAppMajorityBackend,
+    markov: MarkovBackend,
+}
+
+impl NextAppPredictor for StrongPredictiveActionBackend {
+    fn name(&self) -> &'static str {
+        "strong_predictive_action"
+    }
+
+    fn train(&mut self, train: &[NextAppLabel]) {
+        self.per_current.train(train);
+        self.markov.train(train);
+    }
+
+    fn predict(
+        &self,
+        ctx: &aios_spec::StructuredContext,
+        current_app: &str,
+        candidates: &[String],
+    ) -> PredictionResult {
+        let start = Instant::now();
+        let mut scores: HashMap<String, f32> = candidates
+            .iter()
+            .map(|candidate| (candidate.clone(), 0.0))
+            .collect();
+
+        add_rank_scores(
+            &mut scores,
+            &LastForegroundBackend
+                .predict(ctx, current_app, candidates)
+                .ranked,
+            5.0,
+        );
+        add_rank_scores(
+            &mut scores,
+            &RecentNotificationBackend
+                .predict(ctx, current_app, candidates)
+                .ranked,
+            4.0,
+        );
+        add_rank_scores(
+            &mut scores,
+            &NotificationPriorityBackend
+                .predict(ctx, current_app, candidates)
+                .ranked,
+            4.0,
+        );
+        add_rank_scores(
+            &mut scores,
+            &self
+                .per_current
+                .predict(ctx, current_app, candidates)
+                .ranked,
+            3.0,
+        );
+        add_rank_scores(
+            &mut scores,
+            &self.markov.predict(ctx, current_app, candidates).ranked,
+            3.0,
+        );
+
+        let mut ranked: Vec<ScoredPrediction> = scores
+            .into_iter()
+            .filter(|(_, score)| *score > 0.0)
+            .map(|(package, score)| ScoredPrediction { package, score })
+            .collect();
+        ranked.sort_by(|a, b| cmp_score_desc(a, b).then_with(|| a.package.cmp(&b.package)));
+
+        PredictionResult {
+            ranked,
+            latency_us: start.elapsed().as_micros() as u64,
+            rationale_present: false,
+        }
+    }
+}
+
+fn add_rank_scores(
+    scores: &mut HashMap<String, f32>,
+    ranked: &[ScoredPrediction],
+    source_weight: f32,
+) {
+    for (idx, prediction) in ranked.iter().enumerate() {
+        if prediction.score <= 0.0 {
+            continue;
+        }
+        if let Some(score) = scores.get_mut(&prediction.package) {
+            *score += source_weight / (idx as f32 + 1.0);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -637,6 +736,21 @@ mod tests {
             source_tier: SourceTier::PublicApi,
             app_package: Some(package_name.into()),
             uid: None,
+        }
+    }
+
+    fn label(current_app: &str, actual_next_app: &str) -> NextAppLabel {
+        NextAppLabel {
+            dataset_id: "test".into(),
+            scenario: "test".into(),
+            window_start_ms: 0,
+            window_end_ms: 1000,
+            prediction_horizon_ms: 30000,
+            current_app: current_app.into(),
+            observable_candidates: vec![],
+            actual_next_app: Some(actual_next_app.into()),
+            eligible: true,
+            excluded_reason: None,
         }
     }
 
@@ -713,6 +827,16 @@ mod tests {
             prewarm.predict(&ctx, "A", &["B".into()]).ranked,
             foreground.predict(&ctx, "A", &["B".into()]).ranked
         );
+    }
+
+    #[test]
+    fn strong_predictive_action_ignores_zero_score_priors() {
+        let mut backend = StrongPredictiveActionBackend::default();
+        backend.train(&[label("X", "Y")]);
+
+        let result = backend.predict(&ctx_with_events(vec![]), "A", &["B".into(), "C".into()]);
+
+        assert!(result.ranked.is_empty());
     }
 
     #[test]

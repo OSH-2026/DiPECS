@@ -4,6 +4,7 @@
 //! backends and simple baselines against ground-truth labels derived from
 //! synthetic Android traces.
 
+pub mod action_value;
 pub mod baselines;
 pub mod context_loader;
 pub mod metrics;

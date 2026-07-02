@@ -2,11 +2,15 @@
 
 use std::path::PathBuf;
 
+use aios_cli::benchmark_next_app::action_value::{
+    compute_action_value_metrics, evaluate_action_value, ActionValueMode,
+};
 use aios_cli::benchmark_next_app::baselines::{
     FirstCandidateBackend, MarkovBackend, PerCurrentAppMajorityBackend, RandomCandidateBackend,
 };
+use aios_cli::benchmark_next_app::metrics::{compute_backend_metrics, PredictionRecord};
 use aios_cli::benchmark_next_app::runner::{run_benchmark, BenchmarkRunConfig};
-use aios_cli::benchmark_next_app::types::NextAppPredictor;
+use aios_cli::benchmark_next_app::types::{NextAppPredictor, ScoredPrediction};
 use aios_spec::{
     AppTransition, ContextSummary, SanitizedEvent, SanitizedEventType, SourceTier,
     StructuredContext,
@@ -44,6 +48,9 @@ fn report_schema_and_counts_are_correct() {
     let expected_backends = [
         "rule_based",
         "local_evaluator",
+        "dipecs_full_loop",
+        "strong_predictive_action",
+        "oracle_upper_bound",
         "always_noop",
         "random_candidate",
         "first_candidate",
@@ -76,6 +83,149 @@ fn report_schema_and_counts_are_correct() {
             );
         }
     }
+}
+
+#[test]
+fn action_value_metrics_capture_strong_baseline_and_dipecs_loop() {
+    let report = run_benchmark(&default_config()).expect("benchmark should run");
+
+    let strong = report
+        .aggregate
+        .get("strong_predictive_action")
+        .expect("strong predictive action baseline should be present");
+    let dipecs = report
+        .aggregate
+        .get("dipecs_full_loop")
+        .expect("DiPECS full loop aggregate should be present");
+    let oracle = report
+        .aggregate
+        .get("oracle_upper_bound")
+        .expect("oracle upper bound should be present");
+
+    assert!(
+        strong.top5_accuracy_pct >= strong.top3_accuracy_pct,
+        "Top-5 accuracy should dominate Top-3 for the strong baseline"
+    );
+    assert!(
+        strong.action_value.prewarm_attempts > 0,
+        "strong baseline must execute prewarm attempts, not just predict"
+    );
+    assert!(
+        strong.action_value.prewarm_hits > 0,
+        "strong baseline should convert at least one prediction into a useful prewarm"
+    );
+    assert!(
+        strong.action_value.net_benefit_ms > 0.0,
+        "strong baseline should have positive synthetic action value on this fixture"
+    );
+
+    assert!(
+        dipecs.action_value.prewarm_attempts > 0,
+        "DiPECS full loop must include action attempts"
+    );
+    assert!(
+        dipecs.action_value.net_benefit_ms >= 0.0,
+        "DiPECS full loop should not report negative synthetic net benefit"
+    );
+    assert!(
+        report
+            .limitations
+            .iter()
+            .any(|line| line.contains("StrongPredictiveActionBaseline")),
+        "report limitations should explicitly frame the strong action baseline"
+    );
+
+    assert_eq!(
+        oracle.top5_accuracy_pct, 100.0,
+        "oracle upper bound should contain the ground-truth app in Top-5"
+    );
+    assert!(
+        oracle.action_value.net_benefit_ms >= strong.action_value.net_benefit_ms,
+        "oracle is an upper bound for action value"
+    );
+}
+
+#[test]
+fn dipecs_full_loop_prediction_count_matches_real_action_attempts() {
+    let report = run_benchmark(&default_config()).expect("benchmark should run");
+
+    let dipecs = report
+        .aggregate
+        .get("dipecs_full_loop")
+        .expect("DiPECS full loop aggregate should be present");
+
+    assert_eq!(
+        dipecs.predicted_windows, dipecs.action_value.prewarm_attempts,
+        "DiPECS full-loop predictions must come from real routed PreWarm actions, \
+         not from aggregate synthetic ranks"
+    );
+}
+
+#[test]
+fn metrics_count_wrong_non_empty_predictions_as_predicted_windows() {
+    let records = vec![
+        PredictionRecord {
+            rank: Some(1),
+            predicted: true,
+            latency_us: 10,
+            noop: false,
+            rationale_present: false,
+        },
+        PredictionRecord {
+            rank: None,
+            predicted: true,
+            latency_us: 10,
+            noop: false,
+            rationale_present: false,
+        },
+        PredictionRecord {
+            rank: None,
+            predicted: false,
+            latency_us: 10,
+            noop: true,
+            rationale_present: false,
+        },
+    ];
+
+    let metrics = compute_backend_metrics(&records, 3);
+
+    assert_eq!(metrics.predicted_windows, 2);
+    assert_eq!(metrics.top1_hits, 1);
+    assert_eq!(metrics.noop_windows, 1);
+    assert_eq!(metrics.prediction_coverage_pct, 66.667);
+    assert_eq!(metrics.wrong_prediction_rate_pct, 50.0);
+    assert_eq!(metrics.no_prediction_rate_pct, 33.333);
+}
+
+#[test]
+fn action_value_counts_each_topk_prewarm_attempt() {
+    let label = label("A", "C", true);
+    let ranked = vec![
+        ScoredPrediction {
+            package: "B".into(),
+            score: 0.9,
+        },
+        ScoredPrediction {
+            package: "C".into(),
+            score: 0.8,
+        },
+        ScoredPrediction {
+            package: "D".into(),
+            score: 0.7,
+        },
+    ];
+
+    let record = evaluate_action_value(ActionValueMode::DirectTopK, &label, &ranked, 3);
+    let metrics = compute_action_value_metrics(&[record]);
+
+    assert_eq!(metrics.prewarm_attempts, 3);
+    assert_eq!(metrics.prewarm_hits, 1);
+    assert_eq!(metrics.wasted_prewarm, 2);
+    assert_eq!(metrics.prewarm_hit_rate_pct, 33.333);
+    assert_eq!(metrics.wasted_prewarm_rate_pct, 66.667);
+    assert_eq!(metrics.wasted_action_cost_ms, 24.0);
+    assert_eq!(metrics.control_plane_cost_ms, 1.5);
+    assert_eq!(metrics.net_benefit_ms, 94.5);
 }
 
 #[test]

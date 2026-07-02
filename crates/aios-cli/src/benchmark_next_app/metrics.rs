@@ -5,6 +5,7 @@ use super::types::{BackendMetrics, LatencySummary};
 #[derive(Debug, Clone, Default)]
 pub struct PredictionRecord {
     pub rank: Option<usize>,
+    pub predicted: bool,
     pub latency_us: u64,
     pub noop: bool,
     /// True when the underlying predictor produced at least one intent with
@@ -13,11 +14,15 @@ pub struct PredictionRecord {
 }
 
 pub fn compute_backend_metrics(records: &[PredictionRecord], eligible: usize) -> BackendMetrics {
-    let predicted = records.iter().filter(|r| r.rank.is_some()).count();
+    let predicted = records.iter().filter(|r| r.predicted).count();
     let top1 = records.iter().filter(|r| r.rank == Some(1)).count();
     let top3 = records
         .iter()
         .filter(|r| r.rank.is_some_and(|rank| rank <= 3))
+        .count();
+    let top5 = records
+        .iter()
+        .filter(|r| r.rank.is_some_and(|rank| rank <= 5))
         .count();
     let rr_sum: f64 = records
         .iter()
@@ -33,8 +38,10 @@ pub fn compute_backend_metrics(records: &[PredictionRecord], eligible: usize) ->
         predicted_windows: predicted,
         top1_hits: top1,
         top3_hits: top3,
+        top5_hits: top5,
         top1_accuracy_pct: pct(top1, eligible),
         top3_accuracy_pct: pct(top3, eligible),
+        top5_accuracy_pct: pct(top5, eligible),
         prediction_coverage_pct: pct(predicted, eligible),
         conditional_top1_accuracy_pct: pct(top1, predicted),
         wrong_prediction_rate_pct: pct(predicted.saturating_sub(top1), predicted),
@@ -46,6 +53,7 @@ pub fn compute_backend_metrics(records: &[PredictionRecord], eligible: usize) ->
         macro_top3_accuracy_pct: None,
         rationale_coverage_pct: pct(rationale_windows, records.len()),
         latency_us: latency_summary(&latencies),
+        action_value: Default::default(),
     }
 }
 

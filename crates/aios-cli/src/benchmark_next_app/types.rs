@@ -85,8 +85,10 @@ pub struct BackendMetrics {
     pub predicted_windows: usize,
     pub top1_hits: usize,
     pub top3_hits: usize,
+    pub top5_hits: usize,
     pub top1_accuracy_pct: f64,
     pub top3_accuracy_pct: f64,
+    pub top5_accuracy_pct: f64,
     pub prediction_coverage_pct: f64,
     pub conditional_top1_accuracy_pct: f64,
     pub wrong_prediction_rate_pct: f64,
@@ -101,6 +103,22 @@ pub struct BackendMetrics {
     /// `local_evaluator`, `cloud_llm`); statistical baselines always report 0.0.
     pub rationale_coverage_pct: f64,
     pub latency_us: LatencySummary,
+    pub action_value: ActionValueMetrics,
+}
+
+/// Offline action-value summary for one backend.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct ActionValueMetrics {
+    pub prewarm_attempts: usize,
+    pub prewarm_hits: usize,
+    pub wasted_prewarm: usize,
+    pub prewarm_hit_rate_pct: f64,
+    pub wasted_prewarm_rate_pct: f64,
+    pub policy_blocked_actions: usize,
+    pub saved_latency_ms: f64,
+    pub wasted_action_cost_ms: f64,
+    pub control_plane_cost_ms: f64,
+    pub net_benefit_ms: f64,
 }
 
 /// Per-scenario report block.

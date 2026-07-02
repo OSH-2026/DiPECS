@@ -138,6 +138,7 @@ nav:
   - 评估与测试:
     - 模拟器评估套件: evaluation/emulator-evaluation-suite.md
     - 评估场景与数据集: evaluation/scenarios.md
+    - 强 Baseline 与动作收益: evaluation/strong-baseline-action-value.md
     - 评估工具: evaluation/tools.md
   - 调研分析:
     - research/index.md

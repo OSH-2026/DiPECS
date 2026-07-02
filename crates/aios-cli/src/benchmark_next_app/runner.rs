@@ -6,10 +6,14 @@ use std::path::Path;
 use anyhow::{bail, Context, Result};
 use tracing::info;
 
+use super::action_value::{
+    compute_action_value_metrics, evaluate_action_value, ActionValueMode, ActionValueRecord,
+};
 use super::baselines::{
     AlwaysNoOpBackend, FirstCandidateBackend, GlobalMajorityBackend, LastAppPrewarmBackend,
     LastForegroundBackend, MarkovBackend, NotificationPriorityBackend,
     PerCurrentAppMajorityBackend, RandomCandidateBackend, RecentNotificationBackend,
+    StrongPredictiveActionBackend,
 };
 use super::context_loader::{extract_observable_candidates, load_contexts_by_label, load_labels};
 use super::metrics::{compute_backend_metrics, round3, PredictionRecord};
@@ -76,6 +80,7 @@ pub fn run_benchmark(config: &BenchmarkRunConfig) -> Result<BenchmarkReport> {
 
     let mut scenarios = Vec::new();
     let mut aggregate_records: HashMap<String, Vec<PredictionRecord>> = HashMap::new();
+    let mut aggregate_action_records: HashMap<String, Vec<ActionValueRecord>> = HashMap::new();
     let mut aggregate_latencies: HashMap<String, Vec<u64>> = HashMap::new();
 
     for (scenario_name, trace_path) in &input_pairs {
@@ -100,6 +105,7 @@ pub fn run_benchmark(config: &BenchmarkRunConfig) -> Result<BenchmarkReport> {
         let mut predictors: Vec<Box<dyn NextAppPredictor>> = vec![
             Box::new(RuleBasedNextAppBackend),
             Box::new(LocalEvaluatorNextAppBackend),
+            Box::new(StrongPredictiveActionBackend::default()),
             Box::new(AlwaysNoOpBackend),
             Box::new(RandomCandidateBackend::new(42)),
             Box::new(FirstCandidateBackend),
@@ -118,19 +124,51 @@ pub fn run_benchmark(config: &BenchmarkRunConfig) -> Result<BenchmarkReport> {
 
         let mut backend_metrics: BTreeMap<String, BackendMetrics> = BTreeMap::new();
         for predictor in predictors.iter() {
-            let (records, latencies) =
+            let (records, latencies, action_records) =
                 evaluate_predictor(predictor.as_ref(), test, &contexts, scenario_name)?;
-            let metrics = compute_backend_metrics(&records, test.len());
+            let mut metrics = compute_backend_metrics(&records, test.len());
+            metrics.action_value = compute_action_value_metrics(&action_records);
             backend_metrics.insert(predictor.name().to_string(), metrics);
             aggregate_records
                 .entry(predictor.name().to_string())
                 .or_default()
                 .extend(records);
+            aggregate_action_records
+                .entry(predictor.name().to_string())
+                .or_default()
+                .extend(action_records);
             aggregate_latencies
                 .entry(predictor.name().to_string())
                 .or_default()
                 .extend(latencies);
         }
+
+        let (oracle_records, oracle_actions) = oracle_records(test);
+        let mut oracle_metrics = compute_backend_metrics(&oracle_records, test.len());
+        oracle_metrics.action_value = compute_action_value_metrics(&oracle_actions);
+        backend_metrics.insert("oracle_upper_bound".into(), oracle_metrics);
+        aggregate_records
+            .entry("oracle_upper_bound".into())
+            .or_default()
+            .extend(oracle_records);
+        aggregate_action_records
+            .entry("oracle_upper_bound".into())
+            .or_default()
+            .extend(oracle_actions);
+
+        let (full_loop_records, full_loop_actions) =
+            dipecs_full_loop_records(test, &contexts, scenario_name)?;
+        let mut full_loop_metrics = compute_backend_metrics(&full_loop_records, test.len());
+        full_loop_metrics.action_value = compute_action_value_metrics(&full_loop_actions);
+        backend_metrics.insert("dipecs_full_loop".into(), full_loop_metrics);
+        aggregate_records
+            .entry("dipecs_full_loop".into())
+            .or_default()
+            .extend(full_loop_records);
+        aggregate_action_records
+            .entry("dipecs_full_loop".into())
+            .or_default()
+            .extend(full_loop_actions);
 
         let scenario_exclusions =
             exclusion_counts_for_scenario(&scenario_labels.iter().collect::<Vec<_>>());
@@ -184,6 +222,9 @@ pub fn run_benchmark(config: &BenchmarkRunConfig) -> Result<BenchmarkReport> {
         if let Some(latencies) = aggregate_latencies.get(name) {
             metrics.latency_us = super::metrics::latency_summary(latencies);
         }
+        if let Some(action_records) = aggregate_action_records.get(name) {
+            metrics.action_value = compute_action_value_metrics(action_records);
+        }
         aggregate.insert(name.clone(), metrics);
     }
 
@@ -219,6 +260,8 @@ pub fn run_benchmark(config: &BenchmarkRunConfig) -> Result<BenchmarkReport> {
             "Accuracy is reported only for context-supported switches; coverage reports how selective that cohort is.".into(),
             "Latency is measured during this run and is not byte-deterministic across machines.".into(),
             "Statistical baselines are trained on the per-scenario train split and evaluated on the held-out test split.".into(),
+            "StrongPredictiveActionBaseline is the primary action-value baseline: it ensembles Android-observable recency, notification, frequency, and Markov signals, then pays direct-action costs.".into(),
+            "Action-value metrics are deterministic offline estimates; emulator/on-device scripts remain required for causal startup, memory, jank, and bridge latency claims.".into(),
         ],
     })
 }
@@ -228,9 +271,10 @@ fn evaluate_predictor(
     test: &[NextAppLabel],
     contexts: &BTreeMap<(String, i64, i64), aios_spec::StructuredContext>,
     scenario: &str,
-) -> Result<(Vec<PredictionRecord>, Vec<u64>)> {
+) -> Result<(Vec<PredictionRecord>, Vec<u64>, Vec<ActionValueRecord>)> {
     let mut records = Vec::with_capacity(test.len());
     let mut latencies = Vec::with_capacity(test.len());
+    let mut action_records = Vec::with_capacity(test.len());
 
     for label in test {
         let ctx = contexts
@@ -259,8 +303,11 @@ fn evaluate_predictor(
             None
         };
 
+        let mode = action_value_mode_for_backend(predictor.name());
+        action_records.push(evaluate_action_value(mode, label, &result.ranked, 5));
         records.push(PredictionRecord {
             rank,
+            predicted: !result.ranked.is_empty(),
             latency_us: result.latency_us,
             noop: result.ranked.is_empty(),
             rationale_present: result.rationale_present,
@@ -268,7 +315,100 @@ fn evaluate_predictor(
         latencies.push(result.latency_us);
     }
 
-    Ok((records, latencies))
+    Ok((records, latencies, action_records))
+}
+
+fn action_value_mode_for_backend(name: &str) -> ActionValueMode {
+    match name {
+        "rule_based" | "local_evaluator" => ActionValueMode::GovernedTopK,
+        "strong_predictive_action" => ActionValueMode::DirectTopK,
+        "always_noop" => ActionValueMode::NoAction,
+        _ => ActionValueMode::DirectTopK,
+    }
+}
+
+fn oracle_records(test: &[NextAppLabel]) -> (Vec<PredictionRecord>, Vec<ActionValueRecord>) {
+    let records = test
+        .iter()
+        .map(|label| PredictionRecord {
+            rank: label.actual_next_app.as_ref().map(|_| 1),
+            predicted: label.actual_next_app.is_some(),
+            latency_us: 0,
+            noop: label.actual_next_app.is_none(),
+            rationale_present: false,
+        })
+        .collect();
+    let actions = test
+        .iter()
+        .map(|label| evaluate_action_value(ActionValueMode::Oracle, label, &[], 1))
+        .collect();
+    (records, actions)
+}
+
+fn dipecs_full_loop_records(
+    test: &[NextAppLabel],
+    contexts: &BTreeMap<(String, i64, i64), aios_spec::StructuredContext>,
+    scenario: &str,
+) -> Result<(Vec<PredictionRecord>, Vec<ActionValueRecord>)> {
+    let router = aios_agent::DecisionRouter::default();
+    let mut prediction_records = Vec::with_capacity(test.len());
+    let mut action_records = Vec::with_capacity(test.len());
+    for label in test {
+        let ctx = contexts
+            .get(&(
+                label.scenario.clone(),
+                label.window_start_ms,
+                label.window_end_ms,
+            ))
+            .with_context(|| {
+                format!(
+                    "missing context for scenario {} window {}-{}",
+                    scenario, label.window_start_ms, label.window_end_ms
+                )
+            })?;
+        let decision = router.evaluate(ctx);
+        let prewarm_ranked: Vec<super::types::ScoredPrediction> = decision
+            .intent_batch
+            .intents
+            .iter()
+            .flat_map(|intent| intent.suggested_actions.iter())
+            .filter_map(
+                |action| match (&action.action_type, action.target.as_deref()) {
+                    (aios_spec::ActionType::PreWarmProcess, Some(target)) => target
+                        .strip_prefix("pkg:")
+                        .map(|package| super::types::ScoredPrediction {
+                            package: package.to_string(),
+                            score: 1.0,
+                        }),
+                    _ => None,
+                },
+            )
+            .collect();
+        let rank = label.actual_next_app.as_ref().and_then(|actual| {
+            prewarm_ranked
+                .iter()
+                .position(|prediction| &prediction.package == actual)
+                .map(|idx| idx + 1)
+        });
+        prediction_records.push(PredictionRecord {
+            rank,
+            predicted: !prewarm_ranked.is_empty(),
+            latency_us: decision.latency_us,
+            noop: prewarm_ranked.is_empty(),
+            rationale_present: decision
+                .intent_batch
+                .intents
+                .iter()
+                .any(|intent| !intent.rationale_tags.is_empty()),
+        });
+        action_records.push(evaluate_action_value(
+            ActionValueMode::GovernedTopK,
+            label,
+            &prewarm_ranked,
+            1,
+        ));
+    }
+    Ok((prediction_records, action_records))
 }
 
 fn exclusion_counts_for_scenario(labels: &[&NextAppLabel]) -> ExclusionCounts {
