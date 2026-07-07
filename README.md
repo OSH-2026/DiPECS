@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This is a mirror of [114August514/DiPECS](https://github.com/114August514/DiPECS). Please contribute there.
+
 # DiPECS
 
 <div align="center">
